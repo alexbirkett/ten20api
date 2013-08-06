@@ -1,7 +1,5 @@
-var routes = require('./routes'),
-    user = require('./routes/user');
+var routes = require('./routes');
 
 module.exports = function(app) {
     app.get('/api', routes.index);
-    app.get('/users', user.list);
 };
