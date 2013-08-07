@@ -1,5 +1,8 @@
 var routes = require('./routes');
+var tracker = require('./routes/tracker');
+var addRoutes = require('./router');
 
 module.exports = function(app) {
-    app.get('/api', routes.index);
+    app.post('/api/tracker/message', routes.index);
+    addRoutes(tracker, app);
 };
