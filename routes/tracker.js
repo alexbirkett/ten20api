@@ -1,3 +1,5 @@
+var dbs  = require('../db')();
+
 module.exports = {
     tracker: {
         message: {

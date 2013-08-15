@@ -1,7 +1,7 @@
 /*
  * Serve content over a socket
  */
-
+var dbs  = require('../db')();
 var trackersTest = require('../test/trackerData.json');
 
 module.exports = function (socket) {
@@ -25,18 +25,18 @@ module.exports = function (socket) {
     });
 
     /*TODO
-    db.user.findOne({_id: data}, function(error, user) {
+      db.user.findOne({_id: data}, function(error, user) {
       if (error) {
-        socket.disconnect();
-        console.error('disconnected');
+      socket.disconnect();
+      console.error('disconnected');
       } else {
-        user = user;
-        initTrackers(function() {
-          socket.emit('init:ok', {trackers: trackers});
-        });
+      user = user;
+      initTrackers(function() {
+      socket.emit('init:ok', {trackers: trackers});
+      });
       }
-    });
-    */
+      });
+      */
   });
 
   // get trackers current location info
@@ -69,7 +69,7 @@ module.exports = function (socket) {
     delete now[3];
     delete now[5];
     delete now[6];
-    
+
     socket.emit('send:timeWeather', {
       city: 'oslo',
       weather: 'sunny',
@@ -88,17 +88,17 @@ module.exports = function (socket) {
     var latRan = Math.random() * 0.0002;
     var lngRan = Math.random() * 0.0005;
     var latlng = [
-                    {lat: 52.80113, lng: -1.63130},
-                    {lat: 52.81213, lng: -1.65230},
-                    {lat: 52.79013, lng: -1.62330}
-                 ][index];
+    {lat: 52.80113, lng: -1.63130},
+    {lat: 52.81213, lng: -1.65230},
+    {lat: 52.79013, lng: -1.62330}
+    ][index];
 
     return {
       "fence": "ON 7 km",
-      "actTime": "Today " +  hour + ":" + minute,
-      "elevation": elevation + ' km',
-      "speed":  speed + ' km/h',
-      "latlng":[latlng.lat + latRan, latlng.lng + lngRan]
+        "actTime": "Today " +  hour + ":" + minute,
+        "elevation": elevation + ' km',
+        "speed":  speed + ' km/h',
+        "latlng":[latlng.lat + latRan, latlng.lng + lngRan]
     };
   }
 
