@@ -1,44 +1,85 @@
-var dbs  = require('../db')();
+var promise = require('../promiseDb');
 
 module.exports = {
-    trackers: {
-        get: {
-            handler: function (req, res) {
-                res.send("return collection trackers associated with user");
-            }
+  trackers: {
+    get: {
+      handler: function (req, res) {
+        var mail = req.param('email');
+        promise.getUserTrackers({email: mail}).then(function(trackers) {
+          res.json(trackers);
+        });
+      }
+    },
+    put: {
+      handler: function (req, res) {
+        var trackers = req.param('trackers');
+        var mail = req.param('email');
+        promise.putUserTrackers(trackers, {email: mail}).then(function() {
+          res.json({message: ''});
+        }, function() {
+          res.json({message: 'error'});
+        });
+      }
+    },
+    post:{
+      handler: function (req, res) {
+        var newTracker = req.param('tracker');
+        var mail = req.param('email');
+        promise.addUserTrackers(newTracker, {email: mail}).then(function() {
+          res.json({message: ''});
         },
-        put: {
-            handler: function (req, res) {
-                res.send("replace entire collection of trackers associated with user");
-            }
+        function(error) {
+          res.json({message: 'error'});
+        });
+      }
+    },
+    delete: {
+      handler: function (req, res) {
+        var mail = req.param('email');
+        promise.removeUserTrackers({email: mail}).then(function() {
+          res.json({message: ''});
         },
-        post:{
-            handler: function (req, res) {
-                res.send("create a new tracker and associated it with user");
-            }
-        },
-        delete: {
-            handler: function (req, res) {
-                res.send("delete entire collection associated with user");
-            }
-        },
-        ":id": {
-            get: {
-                handler: function (req, res) {
-                    res.send("retrieve a representation of " + req.params.id );
-                }
-            },
-            put: {
-                handler: function (req, res) {
-                    res.send("Replace " + req.params.id + ", or if it doesn't exist, create it.");
-                }
-            },
-            delete: {
-                handler: function (req, res) {
-                    res.send("Delete " + req.params.id);
-                }
-            }
+        function(error) {
+          res.json({message: 'error'});
+        });
+      }
+    },
+    ":id": {
+      get: {
+        handler: function (req, res) {
+          var trackerId = req.param('id');
+          promise.getTracker({id: trackerId}).then(function(tracker) {
+            res.json(tracker);
+          },
+          function (error) {
+            res.json({});
+          });
         }
+      },
+      put: {
+        handler: function (req, res) {
+          var trackerId = req.param('id');
+          var info = req.param('info');
+          promise.putTracker({id: trackerId}, info).then(function(tracker) {
+            res.json({message: ''});
+          },
+          function (error) {
+            res.json({message: error});
+          });
+        }
+      },
+      delete: {
+        handler: function (req, res) {
+          var trackerId = req.param('id');
+          promise.removeTracker({id: trackerId}).then(function(tracker) {
+            res.json({message: ''});
+          },
+          function (error) {
+            res.json({message: error});
+          });
+        }
+      }
     }
+  }
 
 };
