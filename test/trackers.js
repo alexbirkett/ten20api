@@ -32,18 +32,18 @@ var trackerData = [{
 describe('trackers api', function() {
   var url = 'http://localhost:3000';
 
-  describe('routes: --> /trackers/'), function() {
+  before(function(done) {
+    // wait for server start up
+    setTimeout(done, 2000);
+  });
+
+  describe('routes: --> /trackers/', function() {
     var credential = {
       email: 'test@ten20.com',
       password: 'test'
     };
 
     it('setup: create an test account', function(done){
-      var credential = {
-        email: 'test@ten20.com',
-      password: 'test'
-      };
-
       request.post(url + '/signup')
       .send(credential)
       .set('Content-Type', 'application/json')
@@ -91,7 +91,7 @@ describe('trackers api', function() {
     it('should add tracker success --> POST', function(done){
       request.post(url + '/trackers')
       .send({email: credential.email})
-      .send({tracker: [trackerData[1]]})
+      .send({tracker: trackerData[1]})
       .end(function(res) {
         res.should.have.status(200);
         res.body.should.have.property('message');
@@ -123,13 +123,12 @@ describe('trackers api', function() {
 
   });
 
-
-  describe('routes: --> /trackers/:id'), function() {
-    var trackerUrl = url + 'trackers/1234567';
+  describe('routes: --> /trackers/:id', function() {
+    var trackerUrl = url + '/trackers/1234567';
 
     it('should put tracker success --> PUT', function(done){
       request.put(trackerUrl)
-      .send({tracker: [trackerData[0]]})
+      .send({tracker: trackerData[0]})
       .end(function(res) {
         res.should.have.status(200);
         res.body.should.have.property('message');
@@ -142,7 +141,7 @@ describe('trackers api', function() {
       request.get(trackerUrl)
       .end(function(res) {
         res.should.have.status(200);
-        res.body.id.should.equal('1234567');
+        res.body.tracker.id.should.equal('1234567');
         done();
       });
     });
@@ -161,7 +160,7 @@ describe('trackers api', function() {
       request.get(trackerUrl)
       .end(function(res) {
         res.should.have.status(200);
-        res.body.id.should.equal('');
+        should.not.exist(res.body.tracker);
         done();
       });
     });
