@@ -5,6 +5,8 @@ var request = require('request');
 module.exports = function (grunt) {
   var reloadPort = 35729, files;
 
+  require('matchdep').filterDev('grunt-*').forEach(grunt.loadNpmTasks);
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     develop: {
@@ -36,7 +38,14 @@ module.exports = function (grunt) {
         files: ['views/*.jade'],
         options: { livereload: reloadPort},
       }
-    }
+    },
+    exec: {
+          mocha: {
+              command: 'mocha test/*.js -R spec --timeout 15000',
+              stdout: true,
+              stderr: true
+          }
+      }
   });
 
   grunt.config.requires('watch.server.files');
@@ -57,8 +66,9 @@ module.exports = function (grunt) {
     }, 500);
   });
 
-  grunt.loadNpmTasks('grunt-develop');
-  grunt.loadNpmTasks('grunt-contrib-watch');
-
   grunt.registerTask('default', ['develop', 'watch']);
+
+  grunt.registerTask('test', [
+      'exec:mocha'
+  ]);
 };
