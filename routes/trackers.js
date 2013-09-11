@@ -59,8 +59,8 @@ module.exports = {
       put: {
         handler: function (req, res) {
           var trackerId = req.param('id');
-          var info = req.param('info');
-          promise.putTracker({id: trackerId}, info).then(function(tracker) {
+          var tracker = req.param('tracker');
+          promise.putTracker({id: trackerId}, tracker).then(function(tracker) {
             res.json({message: ''});
           },
           function (error) {
