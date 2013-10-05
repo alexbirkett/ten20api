@@ -48,19 +48,19 @@ module.exports = {
       get: {
         handler: function (req, res) {
           var trackerId = req.param('id');
-          promise.getTracker({id: trackerId}).then(function(tracker) {
-            res.json(tracker);
+          promise.getTracker({id: trackerId}).then(function(data) {
+            res.json({tracker: data});
           },
           function (error) {
-            res.json({});
+            res.json({tracker: null});
           });
         }
       },
       put: {
         handler: function (req, res) {
           var trackerId = req.param('id');
-          var info = req.param('info');
-          promise.putTracker({id: trackerId}, info).then(function(tracker) {
+          var tracker = req.param('tracker');
+          promise.putTracker({id: trackerId}, tracker).then(function(tracker) {
             res.json({message: ''});
           },
           function (error) {

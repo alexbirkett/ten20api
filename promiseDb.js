@@ -46,7 +46,7 @@ function findTracker(option) {
 function updateTracker(option, params) {
   var defer = Q.defer();
 
-  dbs.tracker.update(option, { $set: params}, {upsert : true},
+  dbs.tracker.update(option, {$set: params}, {upsert : true},
     function(error, tracker) {
       if (error) {
         defer.reject(error);
@@ -89,7 +89,7 @@ function deleteTracker(option) {
 function deleteUserTrackers(query) {
   var promises = [];
 
-  findUser(query).then(function(user) {
+  return findUser(query).then(function(user) {
     for (var i = 0; i < user.trackers.length; i++) {
       promises.push(deleteTracker({id: user.trackers[i]}));
     };
@@ -99,7 +99,6 @@ function deleteUserTrackers(query) {
     return error;
   });
 
-  return defer.promise;
 }
 
 module.exports = {
