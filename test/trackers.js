@@ -1,5 +1,6 @@
 var should = require('should');
 var request = require('superagent');
+var server = require('../server');
 
 var trackerData = [{
   "id": "1234567",
@@ -32,10 +33,13 @@ var trackerData = [{
 describe('trackers api', function() {
   var url = 'http://localhost:3000';
 
-  before(function(done) {
-    // wait for server start up
-    setTimeout(done, 2000);
-  });
+    before(function (done) {
+        server.startServer(3000, 'testdb', done);
+    });
+
+    after(function (done) {
+        server.close(done);
+    });
 
   describe('routes: --> /trackers/', function() {
     var credential = {
