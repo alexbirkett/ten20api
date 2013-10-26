@@ -30,11 +30,13 @@ var trackerData = [{
     "gpsAvailable": true
 }];
 
+var port = 3001;
+
 describe('trackers api', function() {
-  var url = 'http://localhost:3000';
+  var url = 'http://localhost:' + port;
 
     before(function (done) {
-        server.startServer(3000, 'testdb', done);
+        server.startServer(port, 'testdb', done);
     });
 
     after(function (done) {
