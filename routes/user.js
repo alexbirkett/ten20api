@@ -12,7 +12,7 @@ exports.ensureAuthenticated = function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
         next();
     } else {
-        res.redirect('/#signin');
+        res.json(403, {message: 'not logged in'});
     }
 };
 
@@ -70,23 +70,18 @@ exports.console = {
                                 delete userInfo.password;
                                 delete userInfo.rememberMe;
                                 userCollection.insert(userInfo, function (error, docs) {
-                                    req.login(userInfo, function (err) {
-                                        if (err) {
-                                            return next(err);
-                                        }
-                                        return res.json({message: ''});
-                                    });
+                                    res.json({});
                                 });
                             } else {
-                                res.json({message: 'server interal error!'});
+                                res.json(500, {message: 'server interal error!'});
                             }
                         });
                         // already exist username
                     } else {
-                        res.json({message: 'username already exists!'});
+                        res.json(403, {message: 'username already exists!'});
                     }
                 } else {
-                    res.json({message: 'server interal error!'});
+                    res.json(500, {message: 'server interal error!'});
                 }
             });
         }
