@@ -13,7 +13,7 @@
     "scrypt": "1.7.0",
     "passport": "0.1.17",
     "passport-local": "0.1.6",
-    "express-dry-router": "0.0.1",
+    "express-dry-router": "0.1.0",
     "async": "0.2.9"
   },
   "devDependencies": {
