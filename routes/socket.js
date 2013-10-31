@@ -1,7 +1,6 @@
 /*
  * Serve content over a socket
  */
-var promise = require('../promiseDb');
 
 function roundDate(miniseconds) {
    var today = new Date(miniseconds);
@@ -24,11 +23,6 @@ module.exports = function (socket) {
     var history = { trackerIndex: tracker.index };
 
     var reqDate = roundDate(tracker.date);
-
-    promise.getHistory({trackerSerial: tracker.serial, date: reqDate}).then(function(record) {
-      history.data = record ? record.data: [];
-      socket.emit('send:history', history);
-    });
   });
 
   // broadcast time weather
