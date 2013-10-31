@@ -38,14 +38,14 @@ var findTrackersById = function(id, callback) {
 };
 
 var deleteTrackersById = function(id, callback) {
-    getTrackerCollection().findAndRemove({_id: id}, function(err, docs) {
-        callback(err, docs);
+    getTrackerCollection().remove({_id: id}, function(err, count) {
+        callback(err, count);
     });
 };
 
 var deleteTrackersByOwner = function(owner, callback) {
-    getTrackerCollection().findAndRemove({owner: owner}, function(err, docs) {
-        callback(err, docs);
+    getTrackerCollection().remove({owner: owner}, function(err, count) {
+        callback(err, count);
     });
 };
 
@@ -107,7 +107,7 @@ module.exports = {
             if (err) {
                 res.json(500, "error: database error");
             } else {
-                res.json(trackers);
+                res.json({});
             }
         });
     },
