@@ -13,7 +13,9 @@ module.exports = function(dbUrl, callback) {
             db.dropDatabase(callback);
         }],
         function(err) {
-            db.close();
+            if (db) {
+                db.close();
+            }
             callback(err);
         });
 }
