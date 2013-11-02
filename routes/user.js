@@ -39,7 +39,7 @@ exports.console = {
                     return next(err)
                 }
                 if (!user) {
-                    return res.json(info);
+                    return res.json(403, info);
                 }
                 req.logIn(user, function (err) {
                     if (err) {
