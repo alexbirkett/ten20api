@@ -7,24 +7,24 @@ var getTrackerCollection = function() {
 };
 
 var insertTracker = function(tracker, userId, callback) {
-    tracker.owner = userId;
+    tracker.user = userId;
     getTrackerCollection().insert(tracker, callback);
 };
 
 var updateTracker = function(trackerId, tracker, userId, callback) {
-    tracker.owner = userId;
+    tracker.user = userId;
     getTrackerCollection().update({_id: trackerId}, { $set: tracker }, { upsert : true}, callback);
 }
 
 var isTrackerOwnedByUser = function(trackerId, userId, callback) {
-    var cursor = getTrackerCollection().find({_id: trackerId, owner:userId});
+    var cursor = getTrackerCollection().find({_id: trackerId, user:userId});
     cursor.count(function(err, count) {
        callback(err, count > 0);
     });
 }
 
-var findTrackersByOwner = function(owner, callback) {
-    var cursor = getTrackerCollection().find({owner: owner});
+var findTrackersByUser = function(user, callback) {
+    var cursor = getTrackerCollection().find({user: user});
     cursor.sort(['name']).toArray(function(err, docs) {
         callback(err, docs);
     });
@@ -43,8 +43,8 @@ var deleteTrackersById = function(id, callback) {
     });
 };
 
-var deleteTrackersByOwner = function(owner, callback) {
-    getTrackerCollection().remove({owner: owner}, function(err, count) {
+var deleteTrackersByUser = function(user, callback) {
+    getTrackerCollection().remove({user: user}, function(err, count) {
         callback(err, count);
     });
 };
@@ -61,7 +61,7 @@ module.exports = {
     get: function (req, res) {
         // delete entire collection associated with user
 
-        findTrackersByOwner(req.user._id, function(err, trackers) {
+        findTrackersByUser(req.user._id, function(err, trackers) {
             if (err) {
                 res.json(500, "error: database error");
             } else {
@@ -74,7 +74,7 @@ module.exports = {
 
         async.series([
            function(callback) {
-               deleteTrackersByOwner(req.user._id, callback);
+               deleteTrackersByUser(req.user._id, callback);
         }, function(callback) {
             async.each(req.body, function(item, callback) {
                 insertTracker(item, req.user._id, callback);
@@ -103,7 +103,7 @@ module.exports = {
     },
     delete : function (req, res) {
         // delete entire collection associated with user
-        deleteTrackersByOwner(req.user._id, function(err, trackers) {
+        deleteTrackersByUser(req.user._id, function(err, trackers) {
             if (err) {
                 res.json(500, "error: database error");
             } else {
@@ -120,7 +120,7 @@ module.exports = {
                  if (tracker == null) {
                      res.json(404, { message: "tracker not found"});
                  } else {
-                     if (req.user._id.equals(tracker.owner)) {
+                     if (req.user._id.equals(tracker.user)) {
                          res.json(tracker);
                      } else {
                          res.json(401, { message: "permission denied"});
@@ -135,7 +135,7 @@ module.exports = {
               if (err) {
                   res.json(500, {message: "could not get tracker"});
               } else {
-                  if (tracker === null || req.user._id.equals(tracker.owner)) {
+                  if (tracker === null || req.user._id.equals(tracker.user)) {
                       updateTracker(req.params.id, req.body, req.user._id, function(err) {
                           if (err) {
                               res.json(500, {message: "could not update tracker"});
@@ -159,7 +159,7 @@ module.exports = {
                 } else {
                     if (tracker === null) {
                         res.json(404, { message: "tracker not found"});
-                    } else if (req.user._id.equals(tracker.owner)) {
+                    } else if (req.user._id.equals(tracker.user)) {
                         deleteTrackersById(tracker._id, function(err) {
                            if (err) {
                                res.json(500, { message: "could not delete tracker"} );
