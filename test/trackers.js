@@ -49,7 +49,7 @@ var trackers = [
 
 var port = 3001;
 
-var dbName = 'testTrackers';// + new Date().toUTCString().replace(/\s+/g,'');
+var dbName = 'testTrackers';
 var dbUrl = 'mongodb://localhost/' + dbName;
 
 var credential1 = {
