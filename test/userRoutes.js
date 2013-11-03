@@ -2,12 +2,14 @@ var should = require('should');
 var server = require('../server');
 var requestApi = require('request');
 var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
-
+var dropDatabase = require('../dropDatabase');
+var async = require('async');
 var assert = require('assert');
 
 var port = 3001;
 
-var dbName = 'testUsers' + new Date().toUTCString().replace(/\s+/g,'');
+var dbName = 'testUsers';
+var dbUrl = 'mongodb://localhost/' + dbName;
 
 describe('user routes', function () {
     var url = 'http://localhost:' + port;
@@ -22,8 +24,15 @@ describe('user routes', function () {
         password: 'test2'
     };
 
+
+    var url = 'http://localhost:' + port;
+
     before(function (done) {
-        server.startServer(port, dbName, done);
+        async.series([function (callback) {
+            dropDatabase(dbUrl, callback);
+        }, function (callback) {
+            server.startServer(port, dbName, callback);
+        }], done);
     });
 
     after(function (done) {
