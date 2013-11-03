@@ -55,7 +55,7 @@ module.exports = {
         if (req.isAuthenticated()) {
             next();
         } else {
-            res.json(403, {message: 'not logged in'});
+            res.json(401, {message: 'not logged in'});
         }
     },
     get: function (req, res) {
@@ -123,7 +123,7 @@ module.exports = {
                      if (req.user._id.equals(tracker.owner)) {
                          res.json(tracker);
                      } else {
-                         res.json(403, { message: "permission denied"});
+                         res.json(401, { message: "permission denied"});
                      }
                  }
              }
@@ -144,7 +144,7 @@ module.exports = {
                           }
                       });
                   } else {
-                      res.json(403, { message: "permission denied"});
+                      res.json(401, { message: "permission denied"});
                   }
               }
           });
@@ -168,7 +168,7 @@ module.exports = {
                            }
                         });
                     } else {
-                        res.json(403, { message: "permission denied"});
+                        res.json(401, { message: "permission denied"});
                     }
                 }
             });

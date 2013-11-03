@@ -77,30 +77,30 @@ describe('trackers api', function () {
         server.close(done);
     });
 
-    it('should respond to GET with 403 before login', function (done) {
+    it('should respond to GET with unauthorized before login', function (done) {
         request.get(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to PUT with 403 before login', function (done) {
+    it('should respond to PUT with unauthorized before login', function (done) {
         request.put(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to POST with 403 before login', function (done) {
+    it('should respond to POST with unauthorized before login', function (done) {
         request.post(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to DELETE with 403 before login', function (done) {
+    it('should respond to DELETE with unauthorized before login', function (done) {
         request.del(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
@@ -215,44 +215,44 @@ describe('trackers api', function () {
         });
     });
 
-    it('should respond to GET with 403 after logout', function (done) {
+    it('should respond to GET with unauthorized after logout', function (done) {
         request.get(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to PUT with 403 after logout', function (done) {
+    it('should respond to PUT with unauthorized after logout', function (done) {
         request.put(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to POST with 403 after logout', function (done) {
+    it('should respond to POST with unauthorized after logout', function (done) {
         request.post(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to DELETE with 403 after logout', function (done) {
+    it('should respond to DELETE with unauthorized after logout', function (done) {
         request.del(url + '/trackers', function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to GET requesting specific tracker with 403', function (done) {
+    it('should respond to GET requesting specific tracker with unauthorized', function (done) {
         request.get({url: url + '/trackers/526fb0b3970998723e000004' }, function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to DELETE specific tracker with 403', function (done) {
+    it('should respond to DELETE specific tracker with unauthorized', function (done) {
         request.del({url: url + '/trackers/526fb0b3970998723e000004'}, function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
@@ -281,23 +281,23 @@ describe('trackers api', function () {
         });
     });
 
-    it('should respond to GET requesting tracker created by other account with 403', function (done) {
+    it('should respond to GET requesting tracker created by other account with unauthorized', function (done) {
         request.get({url: url + '/trackers/526fb0b3970998723e000004' }, function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to PUT updating tracker created by other account with 403', function (done) {
+    it('should respond to PUT updating tracker created by other account with unauthorized', function (done) {
         request.put({url: url + '/trackers/526fb0b3970998723e000004', json: trackers[1] }, function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
 
-    it('should respond to DELETE tracker created by other account with 403', function (done) {
+    it('should respond to DELETE tracker created by other account with unauthorized', function (done) {
         request.del({url: url + '/trackers/526fb0b3970998723e000004'}, function (error, response, body) {
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
     });
@@ -348,7 +348,7 @@ describe('trackers api', function () {
         });
     });
 
-    it('should respond to GET for specific tracker id with 404', function (done) {
+    it('should respond to GET for specific tracker id with not found', function (done) {
         request.get({url: url + '/trackers/526fb0b3970998723e000004' }, function (error, response, body) {
             assert.equal(404, response.statusCode);
             done();
