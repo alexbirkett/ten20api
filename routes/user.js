@@ -12,7 +12,7 @@ exports.ensureAuthenticated = function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
         next();
     } else {
-        res.json(403, {message: 'not logged in'});
+        res.json(401, {message: 'not logged in'});
     }
 };
 
@@ -39,7 +39,7 @@ exports.console = {
                     return next(err)
                 }
                 if (!user) {
-                    return res.json(403, info);
+                    return res.json(401, info);
                 }
                 req.logIn(user, function (err) {
                     if (err) {

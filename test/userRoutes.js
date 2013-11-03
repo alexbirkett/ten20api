@@ -34,7 +34,7 @@ describe('user routes', function () {
 
         request.get(url + '/user/info', function (error, response, body) {
             assert.ifError(error);
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
 
@@ -52,7 +52,7 @@ describe('user routes', function () {
         request.get(url + '/user/info', function (error, response, body) {
             assert.ifError(error);
             console.log(response.body);
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
 
@@ -71,7 +71,7 @@ describe('user routes', function () {
     it('should not signin with invalid credentials', function (done) {
         request.post({url: url + '/signin', json: invalidCredential}, function (error, response, body) {
             assert.ifError(error);
-            assert.equal(200, response.statusCode);
+            assert.equal(401, response.statusCode);
             response.body.should.have.property('message');
             response.body.message.should.equal('Invalid password');
             done();
@@ -82,7 +82,7 @@ describe('user routes', function () {
     it('should still not be possible to access info endpoint after invalid login attempt', function (done) {
         request.get(url + '/user/info', function (error, response, body) {
             assert.ifError(error);
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
 
@@ -122,7 +122,7 @@ describe('user routes', function () {
     it('should still not be possible to access info endpoint after sign out', function (done) {
         request.get(url + '/user/info', function (error, response, body) {
             assert.ifError(error);
-            assert.equal(403, response.statusCode);
+            assert.equal(401, response.statusCode);
             done();
         });
 
