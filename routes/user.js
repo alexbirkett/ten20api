@@ -68,6 +68,7 @@ exports.console = {
                                 //pwdhash should now be stored in the database
                                 userInfo.hash = pwdhash;
                                 delete userInfo.password;
+                                delete userInfo['re-password'];
                                 delete userInfo.rememberMe;
                                 userCollection.insert(userInfo, function (error, docs) {
                                     res.json({});
