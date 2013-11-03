@@ -51,7 +51,6 @@ describe('user routes', function () {
     it('should still not be possible to access info endpoint after create account', function (done) {
         request.get(url + '/user/info', function (error, response, body) {
             assert.ifError(error);
-            console.log(response.body);
             assert.equal(401, response.statusCode);
             done();
         });

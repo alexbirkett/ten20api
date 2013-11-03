@@ -1,27 +1,25 @@
 var scrypt = require("scrypt");
 var passport = require('passport');
+var db = require('../db.js');
 var maxtime = 0.1;
-var userCollection;
 
-exports.setDb = function (db) {
-    userCollection = db.collection('user');
+var getUserCollection = function() {
+    return db.getDb().collection('user');
 };
 
-// Simple route middleware to ensure user is authenticated.  Otherwise send to login page.
-exports.ensureAuthenticated = function ensureAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        next();
-    } else {
-        res.json(401, {message: 'not logged in'});
-    }
-};
-
-exports.console = {
+module.exports = {
 
     user: {
         info: {
             get: function (req, res) {
                 res.json(req.user);
+            }
+        },
+        use: function(req, res, next) {
+            if (req.isAuthenticated()) {
+                next();
+            } else {
+                res.json(401, {message: 'not logged in'});
             }
         }
     },
@@ -60,7 +58,7 @@ exports.console = {
         post: function (req, res) {
             var userInfo = req.body;
 
-            userCollection.findOne({email: userInfo.email}, function (error, user) {
+            getUserCollection().findOne({email: userInfo.email}, function (error, user) {
                 if (!error) {
                     if (!user) {
                         scrypt.passwordHash(userInfo.password, maxtime, function (err, pwdhash) {
@@ -70,7 +68,7 @@ exports.console = {
                                 delete userInfo.password;
                                 delete userInfo['re-password'];
                                 delete userInfo.rememberMe;
-                                userCollection.insert(userInfo, function (error, docs) {
+                                getUserCollection().insert(userInfo, function (error, docs) {
                                     res.json({});
                                 });
                             } else {
