@@ -29,7 +29,7 @@ module.exports.startServer = function (port, dbName, callback) {
             app.use(express.methodOverride());
 
             app.use(express.cookieParser('some secret'));
-            app.use(express.session({secret: 'secret_key', store: MemStore({
+            app.use(express.session({secret: 'secret_key',  key: 'apis', store: MemStore({
                 reapInterval: 60000 * 10
             })}));
 
