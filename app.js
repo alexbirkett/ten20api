@@ -1,6 +1,6 @@
 server = require('./server')
 
 
-server.startServer(3001, 'ten20api', function() {
+server.startServer(3001, 'mongodb://localhost/ten20api', function() {
 
 });

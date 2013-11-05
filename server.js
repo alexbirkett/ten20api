@@ -14,10 +14,10 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 
-module.exports.startServer = function (port, dbName, callback) {
+module.exports.startServer = function (port, dbUrl, callback) {
     async.waterfall([
         function (callback) {
-            MongoClient.connect('mongodb://localhost/' + dbName, callback);
+            MongoClient.connect(dbUrl, callback);
         },
         function (db, callback) {
 

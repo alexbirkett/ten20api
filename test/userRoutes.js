@@ -6,7 +6,7 @@ var dropDatabase = require('../dropDatabase');
 var async = require('async');
 var assert = require('assert');
 
-var port = 3001;
+var port = 3006;
 
 var dbName = 'testUsers';
 var dbUrl = 'mongodb://localhost/' + dbName;
@@ -31,7 +31,7 @@ describe('user routes', function () {
         async.series([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
-            server.startServer(port, dbName, callback);
+            server.startServer(port, dbUrl, callback);
         }], done);
     });
 
