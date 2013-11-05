@@ -5,6 +5,10 @@ var server = require('../server');
 var assert = require('assert');
 var async = require('async');
 var dropDatabase = require('../dropDatabase');
+var port = 3004;
+var url = 'http://localhost:' + port;
+
+var auth = require('./helper/auth')(url, request);
 
 var trackers = [
     {
@@ -47,7 +51,7 @@ var trackers = [
     }
 ];
 
-var port = 3001;
+
 
 var dbName = 'testTrackers';
 var dbUrl = 'mongodb://localhost/' + dbName;
@@ -63,7 +67,7 @@ var credential2 = {
 };
 
 describe('trackers api', function () {
-    var url = 'http://localhost:' + port;
+
 
     before(function (done) {
         async.series([function (callback) {
@@ -106,18 +110,11 @@ describe('trackers api', function () {
     });
 
     it('setup: create a test account', function (done) {
-        request.post({url: url + '/signup', json: credential1}, function (error, response, body) {
-            assert.ifError(error);
-            assert.equal(200, response.statusCode);
-            done();
-        });
+        auth.signUp(credential1, done);
     });
 
     it('setup: signin with credential1', function (done) {
-        request.post({url: url + '/signin', json: credential1}, function (error, response, body) {
-            assert.equal(200, response.statusCode);
-            done();
-        });
+        auth.signIn(credential1, done);
     });
 
     it('should respond to GET with zero trackers', function (done) {
@@ -209,10 +206,7 @@ describe('trackers api', function () {
     });
 
     it('setup logout', function (done) {
-        request.get(url + '/signout', function (error, response, body) {
-            assert.ifError(error);
-            done();
-        });
+       auth.signOut(done);
     });
 
     it('should respond to GET with unauthorized after logout', function (done) {
@@ -258,18 +252,11 @@ describe('trackers api', function () {
     });
 
     it('setup: create second test account', function (done) {
-        request.post({url: url + '/signup', json: credential2}, function (error, response, body) {
-            assert.ifError(error);
-            assert.equal(200, response.statusCode);
-            done();
-        });
+        auth.signUp(credential2, done);
     });
 
     it('setup: signin with credential2', function (done) {
-        request.post({url: url + '/signin', json: credential2}, function (error, response, body) {
-            assert.equal(200, response.statusCode);
-            done();
-        });
+        auth.signIn(credential2, done);
     });
 
     it('should respond to GET with zero trackers (after switching accounts)', function (done) {
@@ -311,17 +298,11 @@ describe('trackers api', function () {
 
 
     it('setup logout', function (done) {
-        request.get(url + '/signout', function (error, response, body) {
-            assert.ifError(error);
-            done();
-        });
+        auth.signOut(done);
     });
 
     it('setup: signin with credential1', function (done) {
-        request.post({url: url + '/signin', json: credential1}, function (error, response, body) {
-            assert.equal(200, response.statusCode);
-            done();
-        });
+        auth.signIn(credential1, done);
     });
 
     it('should respond to GET for specific tracker id with correct document (survive delete attempts when logged out or by other account)', function (done) {
