@@ -1,10 +1,13 @@
 var routes = require('./routes');
-var trackers = require('./routes/trackers');
 var user = require('./routes/user');
 var socket = require('./routes/socket');
 var configurePassport = require('./configurePassport');
 var configureDryRoutes = require('express-dry-router');
 var db = require('./db');
+var collectionApi = require('./lib/collection-api');
+
+
+var trackerRoute = collectionApi('tracker');
 
 var Ten20Api = function(app, db, io) {
    this.app = app;
@@ -26,12 +29,12 @@ Ten20Api.prototype.configureMiddleware = function() {
     ]);
 
     this.io.sockets.on('connection', socket);
-    configureDryRoutes(trackers, this.app, undefined, ['use']);
+    configureDryRoutes(trackerRoute, this.app, '/trackers', ['use']);
 };
 
 Ten20Api.prototype.configureRoutes = function () {
     this.app.post('/api/tracker/message', routes.index);
-    configureDryRoutes(trackers, this.app);
+    configureDryRoutes(trackerRoute, this.app, '/trackers');
     configureDryRoutes(user, this.app);
 };
 
