@@ -3,12 +3,21 @@
  */
 
 var express = require('express')
-    , http = require('http')
-    , path = require('path')
-    , Ten20Api = require('./index')
-    , MongoClient = require('mongodb').MongoClient
-    , async = require('async')
-    , MemStore = express.session.MemoryStore
+var http = require('http')
+var path = require('path')
+var MongoClient = require('mongodb').MongoClient
+var async = require('async')
+var MemStore = express.session.MemoryStore
+var routes = require('./routes');
+var user = require('./routes/user');
+var socket = require('./routes/socket');
+var configurePassport = require('./configurePassport');
+var configureDryRoutes = require('express-dry-router');
+var dbSingleton = require('./db');
+var collectionApi = require('./lib/collection-api');
+
+var trackerRoute = collectionApi('tracker');
+var tripsRoute =  collectionApi('trip');
 
 var app = express();
 var server = require('http').createServer(app);
@@ -36,9 +45,26 @@ module.exports.startServer = function (port, dbUrl, callback) {
             if ('development' == app.get('env')) {
                 app.use(express.errorHandler());
             }
-            var ten20api = new Ten20Api(app, db, io);
-            ten20api.configureMiddleware();
-            ten20api.configureRoutes();
+            configurePassport(app, db);
+            configureDryRoutes(user, app, undefined, ['use']);
+            dbSingleton.setDb(db);
+            io.set('log level', 1);
+            io.set('transports', [
+                'websocket'
+                , 'flashsocket'
+                , 'htmlfile'
+                , 'xhr-polling'
+                , 'jsonp-polling'
+            ]);
+
+            io.sockets.on('connection', socket);
+            configureDryRoutes(trackerRoute, app, '/trackers', ['use']);
+            configureDryRoutes(tripsRoute, app, '/trips', ['use']);
+
+            app.post('/api/tracker/message', routes.index);
+            configureDryRoutes(trackerRoute, app, '/trackers');
+            configureDryRoutes(tripsRoute, app, '/trips');
+            configureDryRoutes(user, app);
             app.use(app.router);
 
             server.listen(app.get('port'), callback);
