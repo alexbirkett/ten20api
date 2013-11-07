@@ -8,7 +8,7 @@ module.exports = function(collection, port) {
     var async = require('async');
     var dropDatabase = require('../../lib/drop-database');
     var url = 'http://localhost:' + port;
-    var configRoutes = require('../../route-config');
+    var configRoutes = require('../../lib/route-config');
     var auth = require('./auth')(url, request);
 
     var objectArray = [

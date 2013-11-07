@@ -5,7 +5,7 @@ var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()}
 var dropDatabase = require('../lib/drop-database');
 var async = require('async');
 var assert = require('assert');
-var configRoutes = require('../route-config');
+var configRoutes = require('../lib/route-config');
 
 var port = 3006;
 
