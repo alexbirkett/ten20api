@@ -9,7 +9,7 @@ var MongoClient = require('mongodb').MongoClient
 var async = require('async')
 var MemStore = express.session.MemoryStore
 var configurePassport = require('./lib/configure-passport');
-var dbSingleton = require('./db');
+var dbSingleton = require('./lib/db');
 var app = express();
 var server = require('http').createServer(app);
 

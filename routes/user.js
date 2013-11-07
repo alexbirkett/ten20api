@@ -1,6 +1,6 @@
 var scrypt = require("scrypt");
 var passport = require('passport');
-var db = require('../db.js');
+var db = require('../lib/db.js');
 var maxtime = 0.1;
 
 var getUserCollection = function() {
