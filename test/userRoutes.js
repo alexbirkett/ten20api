@@ -5,6 +5,7 @@ var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()}
 var dropDatabase = require('../dropDatabase');
 var async = require('async');
 var assert = require('assert');
+var configRoutes = require('../route-config');
 
 var port = 3006;
 
@@ -31,7 +32,7 @@ describe('user routes', function () {
         async.series([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
-            server.startServer(port, dbUrl, callback);
+            server.startServer(port, dbUrl, configRoutes, callback);
         }], done);
     });
 

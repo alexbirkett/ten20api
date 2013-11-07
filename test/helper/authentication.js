@@ -8,7 +8,7 @@ module.exports = function(collection, port) {
     var async = require('async');
     var dropDatabase = require('../../dropDatabase');
     var url = 'http://localhost:' + port;
-
+    var configRoutes = require('../../route-config');
     var auth = require('./auth')(url, request);
 
     var objectArray = [
@@ -44,7 +44,7 @@ module.exports = function(collection, port) {
             async.series([function (callback) {
                 dropDatabase(dbUrl, callback);
             }, function (callback) {
-                server.startServer(port, dbUrl, callback);
+                server.startServer(port, dbUrl, configRoutes, callback);
             }], done);
         });
 

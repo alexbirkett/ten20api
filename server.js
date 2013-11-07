@@ -8,21 +8,19 @@ var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
 var MemStore = express.session.MemoryStore
-var routes = require('./routes');
-var user = require('./routes/user');
+
 var socket = require('./routes/socket');
 var configurePassport = require('./configurePassport');
-var configureDryRoutes = require('express-dry-router');
-var dbSingleton = require('./db');
-var collectionApi = require('./lib/collection-api');
 
-var trackerRoute = collectionApi('tracker');
-var tripsRoute =  collectionApi('trip');
+var dbSingleton = require('./db');
+
+
+
 
 var app = express();
 var server = require('http').createServer(app);
 
-module.exports.startServer = function (port, dbUrl, callback) {
+module.exports.startServer = function (port, dbUrl, configRoute, callback) {
     async.waterfall([
         function (callback) {
             MongoClient.connect(dbUrl, callback);
@@ -44,16 +42,13 @@ module.exports.startServer = function (port, dbUrl, callback) {
             if ('development' == app.get('env')) {
                 app.use(express.errorHandler());
             }
+
             configurePassport(app, db);
-            configureDryRoutes(user, app, undefined, ['use']);
+            configRoute(app, callback);
+        },
+        function(callback) {
 
-            configureDryRoutes(trackerRoute, app, '/trackers', ['use']);
-            configureDryRoutes(tripsRoute, app, '/trips', ['use']);
 
-            app.post('/api/tracker/message', routes.index);
-            configureDryRoutes(trackerRoute, app, '/trackers');
-            configureDryRoutes(tripsRoute, app, '/trips');
-            configureDryRoutes(user, app);
             app.use(app.router);
 
             server.listen(app.get('port'), callback);
