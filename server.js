@@ -21,7 +21,6 @@ var tripsRoute =  collectionApi('trip');
 
 var app = express();
 var server = require('http').createServer(app);
-var io = require('socket.io').listen(server);
 
 module.exports.startServer = function (port, dbUrl, callback) {
     async.waterfall([
@@ -30,7 +29,7 @@ module.exports.startServer = function (port, dbUrl, callback) {
         },
         function (db, callback) {
 
-
+            dbSingleton.setDb(db);
             app.set('port', port);
             app.use(express.favicon());
             app.use(express.logger('dev'));
@@ -47,17 +46,7 @@ module.exports.startServer = function (port, dbUrl, callback) {
             }
             configurePassport(app, db);
             configureDryRoutes(user, app, undefined, ['use']);
-            dbSingleton.setDb(db);
-            io.set('log level', 1);
-            io.set('transports', [
-                'websocket'
-                , 'flashsocket'
-                , 'htmlfile'
-                , 'xhr-polling'
-                , 'jsonp-polling'
-            ]);
 
-            io.sockets.on('connection', socket);
             configureDryRoutes(trackerRoute, app, '/trackers', ['use']);
             configureDryRoutes(tripsRoute, app, '/trips', ['use']);
 
