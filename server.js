@@ -8,15 +8,8 @@ var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
 var MemStore = express.session.MemoryStore
-
-var socket = require('./routes/socket');
 var configurePassport = require('./configurePassport');
-
 var dbSingleton = require('./db');
-
-
-
-
 var app = express();
 var server = require('http').createServer(app);
 
