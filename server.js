@@ -10,10 +10,12 @@ var async = require('async')
 var MemStore = express.session.MemoryStore
 var configurePassport = require('./lib/configure-passport');
 var dbSingleton = require('./lib/db');
-var app = express();
-var server = require('http').createServer(app);
 
+var server;
 module.exports.startServer = function (port, dbUrl, configRoute, callback) {
+    var app = express();
+    server = require('http').createServer(app);
+
     async.waterfall([
         function (callback) {
             MongoClient.connect(dbUrl, callback);
