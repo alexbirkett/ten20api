@@ -130,9 +130,10 @@ module.exports = function(collection, port) {
 
                 var jsonBody = JSON.parse(body);
                 jsonBody.should.have.lengthOf(3);
-                assert.equal(undefined, jsonBody[0].name);
+                console.log(jsonBody);
+                assert.equal(undefined, jsonBody[2].name);
                 assert.equal('Alex', jsonBody[1].name);
-                assert.equal('Xiaolei', jsonBody[2].name);
+                assert.equal('Xiaolei', jsonBody[0].name);
                 done();
             });
         });
