@@ -7,7 +7,7 @@ var http = require('http')
 var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
-var MemStore = express.session.MemoryStore
+var MongoStore = require('connect-mongo')(express);
 var configurePassport = require('./lib/configure-passport');
 var dbSingleton = require('./lib/db');
 
@@ -31,9 +31,12 @@ module.exports.startServer = function (port, dbUrl, configRoute, callback) {
             app.use(express.methodOverride());
 
             app.use(express.cookieParser('some secret'));
-            app.use(express.session({secret: 'secret_key',  key: 'apis', store: MemStore({
-                reapInterval: 60000 * 10
-            })}));
+            app.use(express.session({
+                secret: '1GSrN6oX8cvEzfeecNqm3xgfZZZBj6DQpY',
+                store: new MongoStore({
+                    db: db
+                })
+            }));
 
             if ('development' == app.get('env')) {
                 app.use(express.errorHandler());
