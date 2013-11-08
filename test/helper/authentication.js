@@ -92,7 +92,7 @@ module.exports = function(collection, port) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
-                assert.equal(0, jsonBody.length);
+                assert.equal(0, jsonBody.items.length);
                 done();
             });
         });
@@ -110,8 +110,8 @@ module.exports = function(collection, port) {
 
                 var jsonBody = JSON.parse(body);
 
-                jsonBody.should.have.lengthOf(1);
-                var object = jsonBody[0];
+                jsonBody.items.should.have.lengthOf(1);
+                var object = jsonBody.items[0];
                 object.should.have.property('name', 'Xiaolei');
                 done();
             });
@@ -129,11 +129,12 @@ module.exports = function(collection, port) {
                 assert.equal(200, response.statusCode);
 
                 var jsonBody = JSON.parse(body);
-                jsonBody.should.have.lengthOf(3);
+                jsonBody.items.should.have.lengthOf(3);
                 console.log(jsonBody);
-                assert.equal(undefined, jsonBody[2].name);
-                assert.equal('Alex', jsonBody[1].name);
-                assert.equal('Xiaolei', jsonBody[0].name);
+                var items = jsonBody.items;
+                assert.equal(undefined, items[2].name);
+                assert.equal('Alex', items[1].name);
+                assert.equal('Xiaolei', items[0].name);
                 done();
             });
         });
@@ -234,7 +235,7 @@ module.exports = function(collection, port) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
-                jsonBody.should.have.lengthOf(0);
+                jsonBody.items.should.have.lengthOf(0);
                 done();
             });
         });
@@ -288,7 +289,7 @@ module.exports = function(collection, port) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
-                assert.equal(4, jsonBody.length);
+                assert.equal(4, jsonBody.items.length);
                 done();
             });
         });
@@ -311,7 +312,7 @@ module.exports = function(collection, port) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
-                assert.equal(3, jsonBody.length);
+                assert.equal(3, jsonBody.items.length);
                 done();
             });
         });
@@ -327,7 +328,7 @@ module.exports = function(collection, port) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
-                assert.equal(0, jsonBody.length);
+                assert.equal(0, jsonBody.items.length);
                 done();
             });
         });
