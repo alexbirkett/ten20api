@@ -172,7 +172,7 @@ module.exports = function(collection, port) {
         it('should respond to GET for specific object id with correct document with previously updated content', function (done) {
             request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
-                assert.equal(objectArray[1].name, JSON.parse(body).name);
+                assert.equal('Alex', JSON.parse(body).name);
                 done();
             });
         });
