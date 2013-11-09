@@ -104,6 +104,8 @@ module.exports = function(collection, port) {
             });
         });
 
+        var previouslyStoreObjectId;
+
         it('should respond to GET with previously posted object', function (done) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
@@ -113,6 +115,21 @@ module.exports = function(collection, port) {
                 jsonBody.items.should.have.lengthOf(1);
                 var object = jsonBody.items[0];
                 object.should.have.property('name', 'Xiaolei');
+                previouslyStoreObjectId = object._id;
+                done();
+            });
+        });
+
+        it('should respond to GET for specific object id', function (done) {
+            var url = collectionUrl + '/' + previouslyStoreObjectId;
+            request.get({url: url}, function (error, response, body) {
+                assert.equal(200, response.statusCode);
+
+                var jsonBody = JSON.parse(body);
+
+                jsonBody.should.have.property('name', 'Xiaolei');
+
+
                 done();
             });
         });
@@ -130,7 +147,6 @@ module.exports = function(collection, port) {
 
                 var jsonBody = JSON.parse(body);
                 jsonBody.items.should.have.lengthOf(3);
-                console.log(jsonBody);
                 var items = jsonBody.items;
                 assert.equal(undefined, items[2].name);
                 assert.equal('Alex', items[1].name);
@@ -157,7 +173,7 @@ module.exports = function(collection, port) {
         it('should respond to GET for specific object id with correct document', function (done) {
             request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
-                assert.equal(objectArray[0].name, JSON.parse(body).name);
+                assert.equal('Xiaolei', JSON.parse(body).name);
                 done();
             });
         });
