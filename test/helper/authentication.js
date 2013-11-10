@@ -88,6 +88,14 @@ module.exports = function(collection, port) {
             auth.signIn(credential1, done);
         });
 
+        var credential1Info;
+        it('setup: get user info for later', function (done) {
+            auth.getUserInfo(function(error, response, info){
+                credential1Info = info;
+                done();
+            });
+        });
+
         it('should respond to GET with empty array', function (done) {
             request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
@@ -256,6 +264,17 @@ module.exports = function(collection, port) {
             });
         });
 
+        //credential1Info
+
+        it('should not be possible to get trackers owned by other user', function (done) {
+            request.get(collectionUrl + '?user=' + credential1Info._id, function (error, response, body) {
+                assert.equal(200, response.statusCode);
+                var jsonBody = JSON.parse(body);
+                jsonBody.items.should.have.lengthOf(0);
+                done();
+            });
+        });
+
         it('should respond to GET requesting object created by other account with unauthorized', function (done) {
             request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(401, response.statusCode);
@@ -283,7 +302,6 @@ module.exports = function(collection, port) {
                 done();
             });
         });
-
 
         it('setup logout', function (done) {
             auth.signOut(done);

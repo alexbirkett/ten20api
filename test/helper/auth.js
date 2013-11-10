@@ -15,6 +15,11 @@ module.exports = function (url, request) {
             request.get(url + '/signout', function (error, response, body) {
                 callback(error, response, body);
             });
+        },
+        getUserInfo: function(callback) {
+            request.get(url + '/user/info', function (error, response, body) {
+                callback(error, response, JSON.parse(body));
+            });
         }
     }
 };
