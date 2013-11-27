@@ -7,13 +7,13 @@ var getObjectCollection = function () {
 var updateTracker = function (serial, location, callback) {
     var query = { serial: serial};
     var data = { $set: location };
-    getObjectCollection().findAndModify(query, null, data, { /*fields:{ id_:1}*/ }, callback);
+    getObjectCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, callback);
 };
 
 var handleIdChanged = function(doc) {
-   var res = outstandingRequests[doc._id];
-   if (res) {
-       res.json(doc);
+   var obj = outstandingRequests[doc._id];
+   if (obj &&  obj.req.user._id.equals(doc.user)) {
+       obj.res.json(doc);
    }
    outstandingRequests[doc.id] = undefined;
 };
@@ -43,7 +43,12 @@ module.exports =
         notify_changed: {
             ":id": {
                 get: function (req, res) {
-                    outstandingRequests[req.params.id] = res;
+
+                    var obj = {
+                        req: req,
+                        res: res
+                    };
+                    outstandingRequests[req.params.id] = obj;
                 }
             }
         }

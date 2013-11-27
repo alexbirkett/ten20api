@@ -1,11 +1,9 @@
 var async = require('async');
 var user = require('../routes/user');
-var should = require('should');
 var requestApi = require('request');
 var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
 var server = require('../server');
 var assert = require('assert');
-var async = require('async');
 var dropDatabase = require('../lib/drop-database');
 var configRoute = require('../lib/route-config');
 
@@ -22,6 +20,10 @@ var credential1 = {
     password: 'passwordone'
 };
 
+var credential2 = {
+    email: 'test2@ten20.com',
+    password: 'passwordtwo'
+};
 
 var tracker = {
     serial: "24234234235"
@@ -46,7 +48,7 @@ var handleComplete = function(complete, callback) {
     }
 };
 
-describe('test pagination', function () {
+describe('test location endpoint', function () {
 
 
     before(function (done) {
@@ -57,6 +59,8 @@ describe('test pagination', function () {
         },function (callback) {
             auth.signUp(credential1, callback);
         },function (callback) {
+            auth.signUp(credential2, callback);
+        },function (callback) {
             auth.signIn(credential1, callback);
         }], done);
     });
@@ -65,7 +69,8 @@ describe('test pagination', function () {
         async.series([function (callback) {
             auth.signOut(callback);
         }, function (callback) {
-            server.close(callback);
+            ///server.close(callback);
+            callback();
         }], done);
 
     });
@@ -89,6 +94,7 @@ describe('test pagination', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial);
             assert.equal(200, response.statusCode);
+            assert.equal(52.710074934026935, body.latitude)
             handleComplete(complete, done);
         });
 
@@ -99,8 +105,36 @@ describe('test pagination', function () {
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
             });
-        }, 1000);
+        }, 100);
 
     });
 
+
+    it('admin: sign in with credential two', function (done) {
+        async.series([function (callback) {
+            auth.signOut(callback);
+        },function (callback) {
+            auth.signIn(credential2, callback);
+        }], done);
+    });
+
+
+    it('updating location by serial owned by other user should not trigger notify_changed', function (done) {
+
+        var notify_changed = false;
+        request.get({url: url + '/location/notify_changed/528538f0d8d584853c000002', json:true}, function (error, response, body) {
+            notify_changed = true;
+        });
+
+        setTimeout(function() {
+            request.post({url: url + '/location/update_by_serial/' + tracker.serial, json: locationUpdate }, function (error, response, body) {
+                setTimeout(function() {
+                    assert(!notify_changed);
+                    assert.equal(200, response.statusCode);
+                    done();
+                }, 100);
+            });
+        }, 100);
+
+    });
 });
