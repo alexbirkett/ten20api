@@ -1,5 +1,6 @@
 var db = require('../lib/db');
-
+var config = require('../lib/config.js');
+var util = require('../lib/util.js');
 var getObjectCollection = function () {
     return db.getDb().collection('trackers');
 };
@@ -14,9 +15,27 @@ var handleIdChanged = function(doc) {
    var obj = outstandingRequests[doc._id];
    if (obj &&  obj.req.user._id.equals(doc.user)) {
        obj.res.json(doc);
+       delete outstandingRequests[doc.id];
    }
-   outstandingRequests[doc.id] = undefined;
 };
+
+var configureCleanup = function() {
+    var cleanupInterval = config.getLongPollCleanupInterval();
+    setTimeout(function() {
+        var timeNow = util.currentTimeMillis();
+        //console.log('timeNow ' + timeNow);
+        for(var key in outstandingRequests){
+            request = outstandingRequests[key];
+            if (request.timestamp + config.getLongPollTimeOut() < timeNow) {
+                request.res.json(408, {});
+                delete outstandingRequests[key];
+            }
+        }
+        configureCleanup();
+    },cleanupInterval);
+
+};
+configureCleanup();
 
 var outstandingRequests = {};
 
@@ -44,9 +63,11 @@ module.exports =
             ":id": {
                 get: function (req, res) {
 
+                    console.log('notify changed');
                     var obj = {
                         req: req,
-                        res: res
+                        res: res,
+                        timestamp: util.currentTimeMillis()
                     };
                     outstandingRequests[req.params.id] = obj;
                 }

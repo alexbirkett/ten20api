@@ -1,3 +1,8 @@
+var config = require('../lib/config');
+config.setLongPollTimeOut(500);
+config.setLongPollCleanupInterval(40);
+
+
 var async = require('async');
 var user = require('../routes/user');
 var requestApi = require('request');
@@ -6,6 +11,8 @@ var server = require('../server');
 var assert = require('assert');
 var dropDatabase = require('../lib/drop-database');
 var configRoute = require('../lib/route-config');
+
+
 
 var port = 3008;
 
@@ -121,17 +128,23 @@ describe('test location endpoint', function () {
 
     it('updating location by serial owned by other user should not trigger notify_changed', function (done) {
 
-        var notify_changed = false;
+        var complete = {
+            notify_changed: false,
+            update_by_serial: false
+        };
         request.get({url: url + '/location/notify_changed/528538f0d8d584853c000002', json:true}, function (error, response, body) {
-            notify_changed = true;
+            assert.equal(408, response.statusCode);
+            complete.notify_changed = true;
+            handleComplete(complete, done);
         });
 
         setTimeout(function() {
             request.post({url: url + '/location/update_by_serial/' + tracker.serial, json: locationUpdate }, function (error, response, body) {
                 setTimeout(function() {
-                    assert(!notify_changed);
                     assert.equal(200, response.statusCode);
-                    done();
+                    assert(!complete.notify_changed);
+                    complete.update_by_serial = true;
+                    handleComplete(complete, done);
                 }, 100);
             });
         }, 100);
