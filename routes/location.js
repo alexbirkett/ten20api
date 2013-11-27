@@ -39,6 +39,16 @@ configureCleanup();
 
 var outstandingRequests = {};
 
+
+var addRequest = function(id, req, res) {
+    var obj = {
+        req: req,
+        res: res,
+        timestamp: util.currentTimeMillis()
+    };
+    outstandingRequests[id] = obj;
+};
+
 module.exports =
 {
     location: {
@@ -62,14 +72,7 @@ module.exports =
         notify_changed: {
             ":id": {
                 get: function (req, res) {
-
-                    console.log('notify changed');
-                    var obj = {
-                        req: req,
-                        res: res,
-                        timestamp: util.currentTimeMillis()
-                    };
-                    outstandingRequests[req.params.id] = obj;
+                    addRequest(req.params.id, req, res);
                 }
             }
         }
