@@ -12,18 +12,24 @@ var updateTracker = function (serial, location, callback) {
 };
 
 var handleIdChanged = function(doc) {
-   var obj = outstandingRequests[doc._id];
-   if (obj &&  obj.req.user._id.equals(doc.user)) {
+    var obj = outstandingRequests[doc._id];
+    if (obj &&  obj.user.equals(doc.user)) {
        obj.res.json(doc);
-       delete outstandingRequests[doc.id];
-   }
+
+       // remove all keys from outstandingRequests that point to obj
+       for(var key in outstandingRequests){
+           request = outstandingRequests[key];
+           if (request === obj) {
+               delete outstandingRequests[key];
+           }
+       }
+  }
 };
 
 var configureCleanup = function() {
     var cleanupInterval = config.getLongPollCleanupInterval();
     setTimeout(function() {
         var timeNow = util.currentTimeMillis();
-        //console.log('timeNow ' + timeNow);
         for(var key in outstandingRequests){
             request = outstandingRequests[key];
             if (request.timestamp + config.getLongPollTimeOut() < timeNow) {
@@ -40,13 +46,26 @@ configureCleanup();
 var outstandingRequests = {};
 
 
-var addRequest = function(id, req, res) {
-    var obj = {
+var findObjects = function(query, callback) {
+    var cursor = getObjectCollection().find(query, {});
+    cursor.toArray(function(err, docs) {
+        callback(err, docs);
+    });
+};
+
+
+var addRequest = function(id, request) {
+    outstandingRequests[id] = request;
+};
+
+var createRequest =  function(req, res, user) {
+    var request = {
         req: req,
         res: res,
+        user: user,
         timestamp: util.currentTimeMillis()
     };
-    outstandingRequests[id] = obj;
+    return request;
 };
 
 module.exports =
@@ -62,7 +81,6 @@ module.exports =
                         } else {
                             res.json({});
                             handleIdChanged(doc);
-
                         }
 
                     });
@@ -72,8 +90,17 @@ module.exports =
         notify_changed: {
             ":id": {
                 get: function (req, res) {
-                    addRequest(req.params.id, req, res);
+                    addRequest(req.params.id, createRequest(req, res, req.user._id));
                 }
+            },
+            get: function (req, res) {
+                var query = { user: req.user._id };
+                var request = createRequest(req, res, req.user._id);
+                findObjects(query, function(err, objects) {
+                    for (var i = 0; i < objects.length; i++) {
+                        addRequest(objects[i]._id, request);
+                    }
+                });
             }
         }
     }
