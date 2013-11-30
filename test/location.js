@@ -81,10 +81,6 @@ describe('test location endpoint', function () {
             auth.signUp(credential1, callback);
         },function (callback) {
             auth.signUp(credential2, callback);
-        },function (callback) {
-            auth.signIn(credential1, callback);
-        },function (callback) {
-            auth2.signIn(credential2, callback);
         }], done);
     });
 
@@ -97,6 +93,23 @@ describe('test location endpoint', function () {
         }], done);
 
     });
+
+    it('should not be possible to call notify_changed when not logged in', function (done) {
+        request.get({url: url + '/location/notify_changed', json:true}, function (error, response, body) {
+            assert.equal(401, response.statusCode);
+            done();
+        });
+    });
+
+
+    it('admin sign in', function (done) {
+        async.series([function (callback) {
+            auth.signIn(credential1, callback);
+        },function (callback) {
+            auth2.signIn(credential2, callback);
+        }], done);
+    });
+
 
     it('should be possible to add a tracker', function (done) {
         request.put({url: url + '/trackers/528538f0d8d584853c000002', json: tracker1 }, function (error, response, body) {

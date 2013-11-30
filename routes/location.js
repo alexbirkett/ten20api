@@ -88,6 +88,13 @@ module.exports =
             }
         },
         notify_changed: {
+            use: function (req, res, next) {
+                if (req.isAuthenticated()) {
+                    next();
+                } else {
+                    res.json(401, {message: 'not logged in'});
+                }
+            },
             ":id": {
                 get: function (req, res) {
                     addRequest(req.params.id, createRequest(req, res, req.user._id));
