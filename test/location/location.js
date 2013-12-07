@@ -1,25 +1,25 @@
-var config = require('../lib/config');
+var config = require('../../lib/config');
 config.setLongPollTimeOut(500);
 config.setLongPollCleanupInterval(40);
 
 
 var async = require('async');
-var user = require('../routes/user');
+var user = require('../../routes/user');
 var requestApi = require('request');
 var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
 var request2 = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
-var server = require('../server');
+var server = require('../../server');
 var assert = require('assert');
-var dropDatabase = require('../lib/drop-database');
-var configRoute = require('../lib/route-config');
+var dropDatabase = require('../../lib/drop-database');
+var configRoute = require('../../lib/route-config');
 
 
 
 var port = 3008;
 
 var url = 'http://localhost:' + port;
-var auth = require('./helper/auth')(url, request);
-var auth2 = require('./helper/auth')(url, request2);
+var auth = require('./../helper/auth')(url, request);
+var auth2 = require('./../helper/auth')(url, request2);
 
 var dbUrl = 'mongodb://localhost/testLocation';
 
@@ -137,21 +137,22 @@ describe('test location endpoint', function () {
 
         var complete = {
             notify_changed: false,
-            update_by_serial: false
+            update_by_serial: false,
+            update_by_serial_started: false
         };
 
         request.get({url: url + '/location/notify_changed/528538f0d8d584853c000002', json:true}, function (error, response, body) {
             complete.notify_changed = true;
-            assert(complete.update_by_serial);
+            assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
             assert.equal(52.710074934026935, body.latitude)
             handleComplete(complete, done);
         });
 
         setTimeout(function() {
+            complete.update_by_serial_started = true;
             request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
-                assert(!complete.notify_changed);
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
             });
@@ -164,21 +165,22 @@ describe('test location endpoint', function () {
 
         var complete = {
             notify_changed: false,
-            update_by_serial: false
+            update_by_serial: false,
+            update_by_serial_started: false
         };
 
         request.get({url: url + '/location/notify_changed', json:true}, function (error, response, body) {
             complete.notify_changed = true;
-            assert(complete.update_by_serial);
+            assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
             assert.equal(52.710074934026935, body.latitude)
             handleComplete(complete, done);
         });
 
         setTimeout(function() {
+            complete.update_by_serial_started = true;
             request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
-                assert(!complete.notify_changed);
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
             });
@@ -191,21 +193,22 @@ describe('test location endpoint', function () {
 
         var complete = {
             notify_changed: false,
-            update_by_serial: false
+            update_by_serial: false,
+            update_by_serial_started: false
         };
 
         request.get({url: url + '/location/notify_changed', json:true}, function (error, response, body) {
             complete.notify_changed = true;
-            assert(complete.update_by_serial);
+            assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
             assert.equal(52.710074934026935, body.latitude)
             handleComplete(complete, done);
         });
 
         setTimeout(function() {
+            complete.update_by_serial_started = true;
             request.post({url: url + '/location/update_by_serial/' + tracker2.serial, json: locationUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
-                assert(!complete.notify_changed);
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
             });
@@ -218,14 +221,16 @@ describe('test location endpoint', function () {
         var complete = {
             notify_changed1: false,
             update_by_serial1: false,
+            update_by_serial1_started: false,
             notify_changed2: false,
-            update_by_serial2: false
+            update_by_serial2: false,
+            update_by_serial2_started: false
         };
 
         request.get({url: url + '/location/notify_changed/528538f0d8d584853c000002', json:true}, function (error, response, body) {
             complete.notify_changed1 = true;
-            assert(complete.update_by_serial1);
-            assert(complete.update_by_serial2);
+            assert(complete.update_by_serial1_started);
+            assert(complete.update_by_serial2_started);
             assert( complete.notify_changed2);
             assert.equal(200, response.statusCode);
             assert.equal(52.710074934026935, body.latitude)
@@ -234,8 +239,8 @@ describe('test location endpoint', function () {
 
         request2.get({url: url + '/location/notify_changed/528538f0d8d584853c000004', json:true}, function (error, response, body) {
             complete.notify_changed2 = true;
-            assert(complete.update_by_serial1);
-            assert(!complete.update_by_serial2);
+            assert(complete.update_by_serial1_started);
+            assert(!complete.update_by_serial2_started);
             assert(!complete.notify_changed1);
             assert.equal(200, response.statusCode);
             assert.equal(53.710074934026935, body.latitude)
@@ -244,6 +249,7 @@ describe('test location endpoint', function () {
 
 
         setTimeout(function() {
+            complete.update_by_serial1_started = true;
             request2.post({url: url + '/location/update_by_serial/' + tracker3.serial, json: locationUpdate2 }, function (error, response, body) {
                 complete.update_by_serial1 = true;
                 assert.equal(200, response.statusCode);
@@ -251,6 +257,7 @@ describe('test location endpoint', function () {
             });
 
             setTimeout(function() {
+                complete.update_by_serial2_started = true;
                 request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate1 }, function (error, response, body) {
                     complete.update_by_serial2 = true;
                     assert.equal(200, response.statusCode);
