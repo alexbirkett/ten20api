@@ -1,29 +1,62 @@
 var db = require('../lib/db');
 var config = require('../lib/config.js');
 var util = require('../lib/util.js');
-var getObjectCollection = function () {
+var async = require('async');
+
+var DEFAULT_TRIP_DURATION = 6 * 60 * 60 * 1000;
+
+var getTrackerCollection = function () {
     return db.getDb().collection('trackers');
+};
+
+var getTripCollection = function () {
+    return db.getDb().collection('trips');
 };
 
 var updateTracker = function (serial, location, callback) {
     var query = { serial: serial};
     var data = { $set: location };
-    getObjectCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, callback);
+    getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, callback);
+};
+
+
+var addLocationToTrip = function(user, trackerId, tripDuration, location, callback) {
+
+    if (!tripDuration) {
+        tripDuration = DEFAULT_TRIP_DURATION;
+    }
+
+    var timestampNow = util.currentTimeMillis();
+    var timeNow = new Date(timestampNow);
+    var endTime = new Date(timestampNow + tripDuration);
+
+    var data = { $push: { locations: location },
+                 $setOnInsert: {startTime: timeNow, endTime: endTime, trackerId: trackerId, user: user},
+                 $set: { lastUpdate: timeNow }
+               };
+    var query = {
+        endTime:{ $gt: timeNow },
+        trackerId: trackerId
+    };
+    getTripCollection().findAndModify(query, null, data, { new:true, upsert: true /*fields:{ id_:1}*/ }, function(err, doc) {
+        callback(err);
+    });
+
 };
 
 var handleIdChanged = function(doc) {
     var obj = outstandingRequests[doc._id];
     if (obj &&  obj.user.equals(doc.user)) {
-       obj.res.json(doc);
+        obj.res.json(doc);
 
-       // remove all keys from outstandingRequests that point to obj
-       for(var key in outstandingRequests){
-           request = outstandingRequests[key];
-           if (request === obj) {
-               delete outstandingRequests[key];
-           }
-       }
-  }
+        // remove all keys from outstandingRequests that point to obj
+        for(var key in outstandingRequests){
+            request = outstandingRequests[key];
+            if (request === obj) {
+                delete outstandingRequests[key];
+            }
+        }
+    }
 };
 
 var configureCleanup = function() {
@@ -47,7 +80,7 @@ var outstandingRequests = {};
 
 
 var findObjects = function(query, callback) {
-    var cursor = getObjectCollection().find(query, {});
+    var cursor = getTrackerCollection().find(query, {});
     cursor.toArray(function(err, docs) {
         callback(err, docs);
     });
@@ -74,16 +107,20 @@ module.exports =
         update_by_serial: {
             ":id": {
                 post: function (req, res) {
-
-                    updateTracker(req.params.id, req.body, function (err, doc) {
+                    var location = req.body;
+                    async.waterfall([function(callback) {
+                        updateTracker(req.params.id, location, callback);
+                    }, function(trackerDoc, stats, callback) {
+                        handleIdChanged(trackerDoc);
+                        addLocationToTrip(trackerDoc.user, trackerDoc._id, trackerDoc.tripDuration, location, callback);
+                    }], function(err, results, other) {
                         if (err) {
                             res.json(500, {});
                         } else {
-                            res.json({});
-                            handleIdChanged(doc);
+                            res.json(200, {});
                         }
-
                     });
+
                 }
             }
         },
