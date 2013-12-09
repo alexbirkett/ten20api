@@ -19,7 +19,7 @@ util.currentTimeMillis = function() {
     return time;
 };
 
-var port = 3010;
+var port = 3013;
 
 var url = 'http://localhost:' + port;
 var auth = require('./../helper/auth')(url, request);
@@ -47,7 +47,7 @@ var locationUpdate = {
     longitude: -1.8910935332479069
 };
 
-describe('test location endpoint', function () {
+describe('test trips', function () {
 
 
     before(function (done) {
