@@ -23,7 +23,7 @@ module.exports = function(collection, port) {
         }
     ];
 
-    var dbUrl = 'mongodb://localhost/test' + collection;
+    var dbUrl = 'mongodb://localhost/testCollection' + collection;
 
     var credential1 = {
         email: 'test@ten20.com',

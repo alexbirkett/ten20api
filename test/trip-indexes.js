@@ -1,4 +1,4 @@
-require('./helper/authentication')('trips', 3005);
+require('./helper/authentication')('trips', 5056);
 
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient
@@ -9,7 +9,7 @@ describe('test trip indexes', function () {
 
 
     before(function (done) {
-        MongoClient.connect('mongodb://localhost/testtrips', function(err, adb) {
+        MongoClient.connect('mongodb://localhost/testCollectiontrips', function(err, adb) {
             db = adb;
             done(err);
         });
