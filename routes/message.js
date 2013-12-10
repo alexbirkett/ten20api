@@ -16,7 +16,14 @@ var getTripCollection = function () {
 var updateTracker = function (serial, message, callback) {
     var query = { serial: serial};
     var data = { $set: message };
-    getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, callback);
+    getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
+
+        // if the query does not find any documents, findAndModify can call back with no error and a null document
+        if (!doc) {
+            err = 'not found';
+        }
+        callback(err, doc);
+    });
 };
 
 
@@ -109,12 +116,17 @@ module.exports =
                 var message = req.body;
                 async.waterfall([function(callback) {
                     updateTracker(req.params.id, message, callback);
-                }, function(trackerDoc, stats, callback) {
+                }, function(trackerDoc, callback) {
                     handleIdChanged(trackerDoc);
                     addMessageToTrip(trackerDoc.user, trackerDoc._id, trackerDoc.tripDuration, message, callback);
                 }], function(err, results, other) {
                     if (err) {
-                        res.json(500, {});
+
+                        if (err === 'not found') {
+                            res.json(404, {});
+                        } else {
+                            res.json(500, {});
+                        }
                     } else {
                         res.json(200, {});
                     }

@@ -266,4 +266,13 @@ describe('test message endpoint', function () {
             },100);
         }, 100);
     });
+
+
+    it('server should ignore updates with uknown serials', function (done) {
+        request.post({url: url + '/message/234234234234234234', json: messageUpdate1 }, function (error, response, body) {
+
+            assert.equal(404, response.statusCode);
+            done();
+        });
+    });
 });
