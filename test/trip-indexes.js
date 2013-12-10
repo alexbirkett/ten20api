@@ -1,4 +1,4 @@
-require('./helper/authentication')('trips', 5056);
+require('./helper/collection')('trips', 5056);
 
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient
