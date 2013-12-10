@@ -45,13 +45,13 @@ var tracker3 = {
     serial: "24234234237"
 };
 
-var locationUpdate1 = {
+var messageUpdate1 = {
     timestamp: 1385473735305,
     latitude: 52.710074934026935,
     longitude: -1.8910935332479069
 };
 
-var locationUpdate2 = {
+var messageUpdate2 = {
     timestamp: 1385473735305,
     latitude: 53.710074934026935,
     longitude: -1.8910935332479069
@@ -69,7 +69,7 @@ var handleComplete = function(complete, callback) {
     }
 };
 
-describe('test location endpoint', function () {
+describe('test message endpoint', function () {
 
 
     before(function (done) {
@@ -95,7 +95,7 @@ describe('test location endpoint', function () {
     });
 
     it('should not be possible to call notify_changed when not logged in', function (done) {
-        request.get({url: url + '/location/notify_changed', json:true}, function (error, response, body) {
+        request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
             assert.equal(401, response.statusCode);
             done();
         });
@@ -141,7 +141,7 @@ describe('test location endpoint', function () {
             update_by_serial_started: false
         };
 
-        request.get({url: url + '/location/notify_changed/528538f0d8d584853c000002', json:true}, function (error, response, body) {
+        request.get({url: url + '/message/notify/528538f0d8d584853c000002', json:true}, function (error, response, body) {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
@@ -151,7 +151,7 @@ describe('test location endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial_started = true;
-            request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate1 }, function (error, response, body) {
+            request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -161,7 +161,7 @@ describe('test location endpoint', function () {
     });
 
 
-    it('updating location by serial should trigger notify_changed on tracker1 owned by user', function (done) {
+    it('updating message by serial should trigger notify_changed on tracker1 owned by user', function (done) {
 
         var complete = {
             notify_changed: false,
@@ -169,7 +169,7 @@ describe('test location endpoint', function () {
             update_by_serial_started: false
         };
 
-        request.get({url: url + '/location/notify_changed', json:true}, function (error, response, body) {
+        request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
@@ -179,7 +179,7 @@ describe('test location endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial_started = true;
-            request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate1 }, function (error, response, body) {
+            request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -189,7 +189,7 @@ describe('test location endpoint', function () {
     });
 
 
-    it('updating location by serial should trigger notify_changed on tracker2 owned by user', function (done) {
+    it('updating message by serial should trigger notify_changed on tracker2 owned by user', function (done) {
 
         var complete = {
             notify_changed: false,
@@ -197,7 +197,7 @@ describe('test location endpoint', function () {
             update_by_serial_started: false
         };
 
-        request.get({url: url + '/location/notify_changed', json:true}, function (error, response, body) {
+        request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
@@ -207,7 +207,7 @@ describe('test location endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial_started = true;
-            request.post({url: url + '/location/update_by_serial/' + tracker2.serial, json: locationUpdate1 }, function (error, response, body) {
+            request.post({url: url + '/message/' + tracker2.serial, json: messageUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -227,7 +227,7 @@ describe('test location endpoint', function () {
             update_by_serial2_started: false
         };
 
-        request.get({url: url + '/location/notify_changed/528538f0d8d584853c000002', json:true}, function (error, response, body) {
+        request.get({url: url + '/message/notify/528538f0d8d584853c000002', json:true}, function (error, response, body) {
             complete.notify_changed1 = true;
             assert(complete.update_by_serial1_started);
             assert(complete.update_by_serial2_started);
@@ -237,7 +237,7 @@ describe('test location endpoint', function () {
             handleComplete(complete, done);
         });
 
-        request2.get({url: url + '/location/notify_changed/528538f0d8d584853c000004', json:true}, function (error, response, body) {
+        request2.get({url: url + '/message/notify/528538f0d8d584853c000004', json:true}, function (error, response, body) {
             complete.notify_changed2 = true;
             assert(complete.update_by_serial1_started);
             assert(!complete.update_by_serial2_started);
@@ -250,7 +250,7 @@ describe('test location endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial1_started = true;
-            request2.post({url: url + '/location/update_by_serial/' + tracker3.serial, json: locationUpdate2 }, function (error, response, body) {
+            request2.post({url: url + '/message/' + tracker3.serial, json: messageUpdate2 }, function (error, response, body) {
                 complete.update_by_serial1 = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -258,7 +258,7 @@ describe('test location endpoint', function () {
 
             setTimeout(function() {
                 complete.update_by_serial2_started = true;
-                request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate1 }, function (error, response, body) {
+                request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
                     complete.update_by_serial2 = true;
                     assert.equal(200, response.statusCode);
                     handleComplete(complete, done);

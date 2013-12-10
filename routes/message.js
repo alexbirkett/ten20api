@@ -13,14 +13,14 @@ var getTripCollection = function () {
     return db.getDb().collection('trips');
 };
 
-var updateTracker = function (serial, location, callback) {
+var updateTracker = function (serial, message, callback) {
     var query = { serial: serial};
-    var data = { $set: location };
+    var data = { $set: message };
     getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, callback);
 };
 
 
-var addLocationToTrip = function(user, trackerId, tripDuration, location, callback) {
+var addMessageToTrip = function(user, trackerId, tripDuration, message, callback) {
 
     if (!tripDuration) {
         tripDuration = DEFAULT_TRIP_DURATION;
@@ -30,7 +30,7 @@ var addLocationToTrip = function(user, trackerId, tripDuration, location, callba
     var timeNow = new Date(timestampNow);
     var endTime = new Date(timestampNow + tripDuration);
 
-    var data = { $push: { locations: location },
+    var data = { $push: { messages: message },
                  $setOnInsert: {startTime: timeNow, endTime: endTime, trackerId: trackerId, user: user},
                  $set: { lastUpdate: timeNow }
                };
@@ -103,28 +103,26 @@ var createRequest =  function(req, res, user) {
 
 module.exports =
 {
-    location: {
-        update_by_serial: {
-            ":id": {
-                post: function (req, res) {
-                    var location = req.body;
-                    async.waterfall([function(callback) {
-                        updateTracker(req.params.id, location, callback);
-                    }, function(trackerDoc, stats, callback) {
-                        handleIdChanged(trackerDoc);
-                        addLocationToTrip(trackerDoc.user, trackerDoc._id, trackerDoc.tripDuration, location, callback);
-                    }], function(err, results, other) {
-                        if (err) {
-                            res.json(500, {});
-                        } else {
-                            res.json(200, {});
-                        }
-                    });
+    message: {
+        ":id": {
+            post: function (req, res) {
+                var message = req.body;
+                async.waterfall([function(callback) {
+                    updateTracker(req.params.id, message, callback);
+                }, function(trackerDoc, stats, callback) {
+                    handleIdChanged(trackerDoc);
+                    addMessageToTrip(trackerDoc.user, trackerDoc._id, trackerDoc.tripDuration, message, callback);
+                }], function(err, results, other) {
+                    if (err) {
+                        res.json(500, {});
+                    } else {
+                        res.json(200, {});
+                    }
+                });
 
-                }
             }
         },
-        notify_changed: {
+        notify: {
             use: function (req, res, next) {
                 if (req.isAuthenticated()) {
                     next();

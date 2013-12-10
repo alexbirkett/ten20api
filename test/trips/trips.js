@@ -95,7 +95,7 @@ describe('test trips', function () {
             function (callback) {
                 locationUpdate.index = count;
                 count++;
-                request.post({url: url + '/location/update_by_serial/' + tracker1.serial, json: locationUpdate }, function (error, response, body) {
+                request.post({url: url + '/message/' + tracker1.serial, json: locationUpdate }, function (error, response, body) {
                     assert.equal(200, response.statusCode);
                     callback();
                 });
@@ -105,19 +105,19 @@ describe('test trips', function () {
                 assert(!err);
                 request.get({url: url + '/trips?trackerId=528538f0d8d584853c000002', json: true }, function (error, response, body) {
                     assert.equal(200, response.statusCode);
-                    assert.equal(body.items[0].locations[0].index, 0);
-                    assert.equal(body.items[0].locations[1].index, 1);
-                    assert.equal(body.items[0].locations[2].index, 2);
-                    assert.equal(body.items[0].locations[3].index, 3);
-                    assert.equal(body.items[0].locations[4].index, 4);
-                    assert.equal(body.items[0].locations[5].index, 5);
+                    assert.equal(body.items[0].messages[0].index, 0);
+                    assert.equal(body.items[0].messages[1].index, 1);
+                    assert.equal(body.items[0].messages[2].index, 2);
+                    assert.equal(body.items[0].messages[3].index, 3);
+                    assert.equal(body.items[0].messages[4].index, 4);
+                    assert.equal(body.items[0].messages[5].index, 5);
 
-                    assert.equal(body.items[1].locations[0].index, 6);
-                    assert.equal(body.items[1].locations[1].index, 7);
-                    assert.equal(body.items[1].locations[2].index, 8);
-                    assert.equal(body.items[1].locations[3].index, 9);
-                    assert.equal(body.items[1].locations[4].index, 10);
-                    assert.equal(body.items[1].locations[5].index, 11);
+                    assert.equal(body.items[1].messages[0].index, 6);
+                    assert.equal(body.items[1].messages[1].index, 7);
+                    assert.equal(body.items[1].messages[2].index, 8);
+                    assert.equal(body.items[1].messages[3].index, 9);
+                    assert.equal(body.items[1].messages[4].index, 10);
+                    assert.equal(body.items[1].messages[5].index, 11);
                     done();
                 });
             }
@@ -133,7 +133,7 @@ describe('test trips', function () {
             function (callback) {
                 locationUpdate.index = count;
                 count++;
-                request.post({url: url + '/location/update_by_serial/' + tracker2.serial, json: locationUpdate }, function (error, response, body) {
+                request.post({url: url + '/message/' + tracker2.serial, json: locationUpdate }, function (error, response, body) {
                     assert.equal(200, response.statusCode);
                     callback();
                 });
@@ -143,21 +143,21 @@ describe('test trips', function () {
                 assert(!err);
                 request.get({url: url + '/trips?trackerId=528538f0d8d584853c000003', json: true }, function (error, response, body) {
                     assert.equal(200, response.statusCode);
-                    assert.equal(body.items[0].locations[0].index, 0);
-                    assert.equal(body.items[0].locations[1].index, 1);
-                    assert.equal(body.items[0].locations[2].index, 2);
+                    assert.equal(body.items[0].messages[0].index, 0);
+                    assert.equal(body.items[0].messages[1].index, 1);
+                    assert.equal(body.items[0].messages[2].index, 2);
 
-                    assert.equal(body.items[1].locations[0].index, 3);
-                    assert.equal(body.items[1].locations[1].index, 4);
-                    assert.equal(body.items[1].locations[2].index, 5);
+                    assert.equal(body.items[1].messages[0].index, 3);
+                    assert.equal(body.items[1].messages[1].index, 4);
+                    assert.equal(body.items[1].messages[2].index, 5);
 
-                    assert.equal(body.items[2].locations[0].index, 6);
-                    assert.equal(body.items[2].locations[1].index, 7);
-                    assert.equal(body.items[2].locations[2].index, 8);
+                    assert.equal(body.items[2].messages[0].index, 6);
+                    assert.equal(body.items[2].messages[1].index, 7);
+                    assert.equal(body.items[2].messages[2].index, 8);
 
-                    assert.equal(body.items[3].locations[0].index, 9);
-                    assert.equal(body.items[3].locations[1].index, 10);
-                    assert.equal(body.items[3].locations[2].index, 11);
+                    assert.equal(body.items[3].messages[0].index, 9);
+                    assert.equal(body.items[3].messages[1].index, 10);
+                    assert.equal(body.items[3].messages[2].index, 11);
                     done();
                 });
             }
