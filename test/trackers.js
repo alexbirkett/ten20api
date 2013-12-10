@@ -28,4 +28,11 @@ describe('test tracker indexes', function () {
             done();
         });
     });
+
+    it('should have serial index on trackers collection', function (done) {
+        db.collection('trackers').indexes(function(err, indexes) {
+            assert.equal(indexes[2].key['serial'], 1);
+            done();
+        });
+    });
 });

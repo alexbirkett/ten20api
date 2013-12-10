@@ -31,7 +31,15 @@ describe('test trip indexes', function () {
 
     it('should have tracker index on trips collection', function (done) {
         db.collection('trips').indexes(function(err, indexes) {
-            assert.equal(indexes[2].key['tracker'], 1);
+            assert.equal(indexes[2].key['trackerId'], 1);
+            done();
+        });
+    });
+
+    it('should have tracker end time compound index on trips collection', function (done) {
+        db.collection('trips').indexes(function(err, indexes) {
+            assert.equal(indexes[3].key['endTime'], -1);
+            assert.equal(indexes[3].key['trackerId'], 1);
             done();
         });
     });
