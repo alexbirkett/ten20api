@@ -9,7 +9,7 @@ describe('test tracker indexes', function () {
 
 
     before(function (done) {
-        MongoClient.connect('mongodb://localhost/testtrackers', function(err, adb) {
+        MongoClient.connect('mongodb://localhost/testCollectiontrackers', function(err, adb) {
             db = adb;
             done(err);
         });
