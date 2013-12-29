@@ -1,6 +1,6 @@
 var server = require('./server')
 var configRoute = require('./lib/route-config');
 
-server.startServer(3001, 'mongodb://localhost/ten20api', configRoute, function() {
-
+server.startServer(3001, 'mongodb://localhost/ten20api', configRoute, function(err) {
+    console.log('servar started ' + err);
 });
