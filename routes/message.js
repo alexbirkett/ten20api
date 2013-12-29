@@ -2,7 +2,13 @@ var db = require('../lib/db');
 var config = require('../lib/config.js');
 var util = require('../lib/util.js');
 var async = require('async');
+var ResponseTimes = require('../lib/response-times');
 
+var responseTimes = new ResponseTimes(100);
+var updateTrackerTimes = new ResponseTimes(100);
+var updateTrackerTimesAsync = new ResponseTimes(100);
+var addMessageToTripTimes = new ResponseTimes(100);
+var addMessageToTripTimesAsync = new ResponseTimes(100);
 var DEFAULT_TRIP_DURATION = 6 * 60 * 60 * 1000;
 
 var getTrackerCollection = function () {
@@ -16,8 +22,9 @@ var getTripCollection = function () {
 var updateTracker = function (serial, message, callback) {
     var query = { serial: serial};
     var data = { $set: message };
+    var timeBefore = new Date().getTime();
     getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
-
+        updateTrackerTimes.addTime(new Date().getTime() - timeBefore);
         // if the query does not find any documents, findAndModify can call back with no error and a null document
         if (!doc) {
             err = 'not found';
@@ -26,9 +33,9 @@ var updateTracker = function (serial, message, callback) {
     });
 };
 
-
 var addMessageToTrip = function(user, trackerId, tripDuration, message, callback) {
 
+    var timeBefore = new Date().getTime();
     if (!tripDuration) {
         tripDuration = DEFAULT_TRIP_DURATION;
     }
@@ -46,6 +53,7 @@ var addMessageToTrip = function(user, trackerId, tripDuration, message, callback
         trackerId: trackerId
     };
     getTripCollection().findAndModify(query, null, data, { new:true, upsert: true /*fields:{ id_:1}*/ }, function(err, doc) {
+        addMessageToTripTimes.addTime(new Date().getTime() - timeBefore);
         callback(err);
     });
 
@@ -113,13 +121,19 @@ module.exports =
     message: {
         ":id": {
             post: function (req, res) {
+                var timeBefore = new Date().getTime();
+                var timeBeforeAddMessageToTrip;
                 var message = req.body;
                 async.waterfall([function(callback) {
                     updateTracker(req.params.id, message, callback);
                 }, function(trackerDoc, callback) {
+                    updateTrackerTimesAsync.addTime(new Date().getTime() - timeBefore);
                     handleIdChanged(trackerDoc);
+                    timeBeforeAddMessageToTrip = new Date().getTime();
                     addMessageToTrip(trackerDoc.user, trackerDoc._id, trackerDoc.tripDuration, message, callback);
                 }], function(err, results, other) {
+                    responseTimes.addTime(new Date().getTime() - timeBefore);
+                    addMessageToTripTimesAsync.addTime(new Date().getTime() - timeBeforeAddMessageToTrip);
                     if (err) {
 
                         if (err === 'not found') {
@@ -159,3 +173,11 @@ module.exports =
         }
     }
 };
+
+var printAverageResponseTime = function() {
+
+    console.log('average response time ' + responseTimes.calculateAverage() + ' updateTrackerTimes ' + updateTrackerTimes.calculateAverage() + ' ' + updateTrackerTimesAsync.calculateAverage() + ' addMessageToTrip ' + addMessageToTripTimes.calculateAverage() + ' ' + addMessageToTripTimesAsync.calculateAverage() );
+    setTimeout(printAverageResponseTime, 1000);
+};
+
+printAverageResponseTime();
