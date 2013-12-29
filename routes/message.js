@@ -4,11 +4,15 @@ var util = require('../lib/util.js');
 var async = require('async');
 var ResponseTimes = require('../lib/response-times');
 
+var FunctionCallCounter = require('../lib/function-call-counter');
+
+
 var responseTimes = new ResponseTimes(100);
 var updateTrackerTimes = new ResponseTimes(100);
 var updateTrackerTimesAsync = new ResponseTimes(100);
 var addMessageToTripTimes = new ResponseTimes(100);
 var addMessageToTripTimesAsync = new ResponseTimes(100);
+var responseCounter = new FunctionCallCounter();
 var DEFAULT_TRIP_DURATION = 6 * 60 * 60 * 1000;
 
 var getTrackerCollection = function () {
@@ -121,6 +125,7 @@ module.exports =
     message: {
         ":id": {
             post: function (req, res) {
+                responseCounter.called();
                 var timeBefore = new Date().getTime();
                 var timeBeforeAddMessageToTrip;
                 var message = req.body;
@@ -176,7 +181,7 @@ module.exports =
 
 var printAverageResponseTime = function() {
 
-    console.log('average response time ' + responseTimes.calculateAverage() + ' updateTrackerTimes ' + updateTrackerTimes.calculateAverage() + ' ' + updateTrackerTimesAsync.calculateAverage() + ' addMessageToTrip ' + addMessageToTripTimes.calculateAverage() + ' ' + addMessageToTripTimesAsync.calculateAverage() );
+    console.log('called '+ responseCounter.count() + ' per second average response time ' + responseTimes.calculateAverage() + ' updateTrackerTimes ' + updateTrackerTimes.calculateAverage() + ' ' + updateTrackerTimesAsync.calculateAverage() + ' addMessageToTrip ' + addMessageToTripTimes.calculateAverage() + ' ' + addMessageToTripTimesAsync.calculateAverage() );
     setTimeout(printAverageResponseTime, 1000);
 };
 
