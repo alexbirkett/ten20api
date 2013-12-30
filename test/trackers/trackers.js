@@ -1,5 +1,5 @@
 
-require('./helper/collection')('trackers', 3004);
+require('./../helper/collection')('trackers', 3004);
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient
 
