@@ -13,10 +13,12 @@ module.exports = function(collection, port) {
 
     var objectArray = [
         {
-            "name": "Xiaolei"
+            "name": "Xiaolei",
+            "country": "China"
         },
         {
-            "name": "Alex"
+            "name": "Alex",
+            "country": "UK"
         },
         {
 
@@ -171,7 +173,7 @@ module.exports = function(collection, port) {
         });
 
         it('should store specific object ID in response to PUT', function (done) {
-            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[0] }, function (error, response, body) {
+            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: { "name": "Xiaolei", "country": "China" } }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
@@ -179,24 +181,44 @@ module.exports = function(collection, port) {
 
 
         it('should respond to GET for specific object id with correct document', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
+            request.get({url: collectionUrl + '/526fb0b3970998723e000004', json:true }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
-                assert.equal('Xiaolei', JSON.parse(body).name);
+                assert.equal('Xiaolei', body.name);
+                assert.equal('China', body.country);
                 done();
             });
         });
 
         it('should replace specific document in response to PUT', function (done) {
-            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[1] }, function (error, response, body) {
+            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: { name: 'Alex'} }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET for specific object id with correct document with previously updated content', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
+            request.get({url: collectionUrl + '/526fb0b3970998723e000004', json: true }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
-                assert.equal('Alex', JSON.parse(body).name);
+                console.log(body);
+                assert.equal('Alex', body.name);
+                assert.equal(undefined, body.country);
+                done();
+            });
+        });
+
+        it('should patch specific document in response to PATCH', function (done) {
+            request.patch({url: collectionUrl + '/526fb0b3970998723e000004', json: { country: 'UK'} }, function (error, response, body) {
+                assert.equal(200, response.statusCode);
+                done();
+            });
+        });
+
+        it('should respond to GET for specific object id with correct document with previously patched content', function (done) {
+            request.get({url: collectionUrl + '/526fb0b3970998723e000004', json: true}, function (error, response, body) {
+                console.log(body);
+                assert.equal(200, response.statusCode);
+                assert.equal('Alex',body.name);
+                assert.equal('UK', body.country);
                 done();
             });
         });
@@ -289,6 +311,13 @@ module.exports = function(collection, port) {
             });
         });
 
+        it('should respond to PATCH updating object created by other account with unauthorized', function (done) {
+            request.patch({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[1] }, function (error, response, body) {
+                assert.equal(401, response.statusCode);
+                done();
+            });
+        });
+
         it('should respond to DELETE object created by other account with unauthorized', function (done) {
             request.del({url: collectionUrl + '/526fb0b3970998723e000004'}, function (error, response, body) {
                 assert.equal(401, response.statusCode);
@@ -314,7 +343,7 @@ module.exports = function(collection, port) {
         it('should respond to GET for specific object id with correct document (survive delete attempts when logged out or by other account)', function (done) {
             request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
-                assert.equal(objectArray[1].name, JSON.parse(body).name);
+                assert.equal('Alex', JSON.parse(body).name);
                 done();
             });
         });
