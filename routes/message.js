@@ -23,6 +23,10 @@ var getTripCollection = function () {
     return db.getDb().collection('trips');
 };
 
+var getMessageCollection = function () {
+    return db.getDb().collection('messages');
+};
+
 var updateTracker = function (serial, message, callback) {
     var query = { serial: serial};
     var data = { $set: message };
@@ -37,30 +41,64 @@ var updateTracker = function (serial, message, callback) {
     });
 };
 
-var addMessageToTrip = function(user, trackerId, tripDuration, message, callback) {
-
-    var timeBefore = new Date().getTime();
-    if (!tripDuration) {
-        tripDuration = DEFAULT_TRIP_DURATION;
-    }
-
-    var timestampNow = util.currentTimeMillis();
-    var timeNow = new Date(timestampNow);
-    var endTime = new Date(timestampNow + tripDuration);
-
-    var data = { $push: { messages: message },
-                 $setOnInsert: {startTime: timeNow, endTime: endTime, trackerId: trackerId, user: user},
-                 $set: { lastUpdate: timeNow }
-               };
-    var query = {
-        endTime:{ $gt: timeNow },
-        trackerId: trackerId
+var addMessage = function(userId, trackerId, message, timestampNow, callback) {
+    message.receivedTimestamp = timestampNow;
+    var object = {
+        timestamp: timestampNow,
+        message: message,
+        trackerId: trackerId,
+        userId: userId
     };
-    getTripCollection().findAndModify(query, null, data, { new:true, upsert: true /*fields:{ id_:1}*/ }, function(err, doc) {
-        addMessageToTripTimes.addTime(new Date().getTime() - timeBefore);
+    getMessageCollection().insert(object, callback);
+};
+
+var findOldestMessage = function(trackerId, callback) {
+    var cursor = getMessageCollection().find({trackerId: trackerId}, { limit: 1});
+    cursor.toArray(function(err, docs) {
+        var doc;
+        if (docs) {
+            doc = docs[0];
+        }
+        callback(err, doc);
+    });
+};
+
+var isConversionRequired = function(trackerId, tripDuration, timestampNow, callback) {
+    findOldestMessage(trackerId, function(err, doc) {
+        if (!tripDuration) {
+            tripDuration = DEFAULT_TRIP_DURATION;
+        }
+        callback(null, doc && doc.timestamp + tripDuration <= timestampNow);
+    })
+};
+
+var buildMessageArray = function(messages) {
+    var messageArray = [];
+    messages.forEach(function(messageContainer) {
+       messageArray.push(messageContainer.message);
+    });
+    return messageArray;
+};
+
+var convertMessagesToTrips = function(trackerId, userId, callback) {
+
+    async.waterfall([function(callback) {
+        var cursor = getMessageCollection().find({trackerId: trackerId});
+        cursor.toArray(callback);
+    }, function(docs, callback) {
+        var data = {
+            messages: buildMessageArray(docs),
+            startTime: docs[0].timestamp,
+            endTime: docs[docs.length - 1].timestamp,
+            user: userId,
+            trackerId: trackerId
+        };
+        getTripCollection().insert(data, callback);
+    }, function(result, callback) {
+        getMessageCollection().remove({trackerId: trackerId}, callback);
+    }], function(err) {
         callback(err);
     });
-
 };
 
 var handleIdChanged = function(doc) {
@@ -126,17 +164,29 @@ module.exports =
         ":id": {
             post: function (req, res) {
                 responseCounter.called();
+                var timestampNow = util.currentTimeMillis();
                 var timeBefore = new Date().getTime();
                 var timeBeforeAddMessageToTrip;
                 var message = req.body;
+                var trackerDoc;
                 async.waterfall([function(callback) {
                     updateTracker(req.params.id, message, callback);
-                }, function(trackerDoc, callback) {
+                }, function(pTrackerDoc, callback) {
+                    trackerDoc = pTrackerDoc;
                     updateTrackerTimesAsync.addTime(new Date().getTime() - timeBefore);
                     handleIdChanged(trackerDoc);
                     timeBeforeAddMessageToTrip = new Date().getTime();
-                    addMessageToTrip(trackerDoc.user, trackerDoc._id, trackerDoc.tripDuration, message, callback);
-                }], function(err, results, other) {
+                    isConversionRequired(trackerDoc._id, trackerDoc.tripDuration, timestampNow, callback);
+                }, function(conversionRequired, callback) {
+                    if (conversionRequired) {
+                        convertMessagesToTrips(trackerDoc._id, trackerDoc.user, callback);
+                    } else {
+                        callback(null);
+                    }
+                }, function(callback) {
+                    addMessage(trackerDoc.user, trackerDoc._id, message, timestampNow, callback);
+                }
+                ], function(err) {
                     responseTimes.addTime(new Date().getTime() - timeBefore);
                     addMessageToTripTimesAsync.addTime(new Date().getTime() - timeBeforeAddMessageToTrip);
                     if (err) {

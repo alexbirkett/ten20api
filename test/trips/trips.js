@@ -91,7 +91,7 @@ describe('test trips', function () {
 
         var count = 0;
         async.whilst(
-            function () { return count < 12; },
+            function () { return count < 13; },
             function (callback) {
                 locationUpdate.index = count;
                 count++;
@@ -129,7 +129,7 @@ describe('test trips', function () {
 
         var count = 0;
         async.whilst(
-            function () { return count < 12; },
+            function () { return count < 13; },
             function (callback) {
                 locationUpdate.index = count;
                 count++;
