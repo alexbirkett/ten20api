@@ -97,8 +97,8 @@ var convertMessagesToTrips = function(trackerId, userId, callback) {
     }, function(docs, callback) {
         var data = {
             messages: buildMessageArray(docs),
-            startTime: docs[0].timestamp,
-            endTime: docs[docs.length - 1].timestamp,
+            startTime: new Date(docs[0].timestamp),
+            endTime: new Date(docs[docs.length - 1].timestamp),
             user: userId,
             trackerId: trackerId
         };
