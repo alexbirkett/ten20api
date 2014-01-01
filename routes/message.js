@@ -53,7 +53,12 @@ var addMessage = function(userId, trackerId, message, timestampNow, callback) {
 };
 
 var findOldestMessage = function(trackerId, callback) {
-    var cursor = getMessageCollection().find({trackerId: trackerId}, { limit: 1});
+    var options = {
+        sort: [['_id','asc']],
+        limit: 1
+    };
+
+    var cursor = getMessageCollection().find({trackerId: trackerId}, undefined, options);
     cursor.toArray(function(err, docs) {
         var doc;
         if (docs) {
@@ -82,8 +87,12 @@ var buildMessageArray = function(messages) {
 
 var convertMessagesToTrips = function(trackerId, userId, callback) {
 
+
     async.waterfall([function(callback) {
-        var cursor = getMessageCollection().find({trackerId: trackerId});
+        var sort = {
+            "sort": [['_id','asc']]
+        };
+        var cursor = getMessageCollection().find({trackerId: trackerId}, undefined, sort);
         cursor.toArray(callback);
     }, function(docs, callback) {
         var data = {
