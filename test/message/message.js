@@ -145,7 +145,7 @@ describe('test message endpoint', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.latitude)
             handleComplete(complete, done);
         });
 
@@ -173,7 +173,7 @@ describe('test message endpoint', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.latitude)
             handleComplete(complete, done);
         });
 
@@ -201,7 +201,7 @@ describe('test message endpoint', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.latitude)
             handleComplete(complete, done);
         });
 
@@ -233,7 +233,7 @@ describe('test message endpoint', function () {
             assert(complete.update_by_serial2_started);
             assert( complete.notify_changed2);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.latitude)
             handleComplete(complete, done);
         });
 
@@ -243,7 +243,7 @@ describe('test message endpoint', function () {
             assert(!complete.update_by_serial2_started);
             assert(!complete.notify_changed1);
             assert.equal(200, response.statusCode);
-            assert.equal(53.710074934026935, body.latitude)
+            assert.equal(53.710074934026935, body.lastMessage.latitude)
             handleComplete(complete, done);
         });
 

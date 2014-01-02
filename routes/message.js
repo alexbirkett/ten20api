@@ -29,7 +29,7 @@ var getMessageCollection = function () {
 
 var updateTracker = function (serial, message, callback) {
     var query = { serial: serial};
-    var data = { $set: message };
+    var data = { $set: { lastMessage: message } };
     var timeBefore = new Date().getTime();
     getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
         updateTrackerTimes.addTime(new Date().getTime() - timeBefore);
