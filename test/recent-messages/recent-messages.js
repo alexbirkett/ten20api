@@ -1,4 +1,4 @@
-require('./../helper/collection')('recent-messages', 3014);
+require('./../helper/collection')('recent_messages', 3014);
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient
 
@@ -7,7 +7,7 @@ var db;
 describe('test tracker indexes', function () {
 
     before(function (done) {
-        MongoClient.connect('mongodb://localhost/testCollectionrecent-messages', function(err, adb) {
+        MongoClient.connect('mongodb://localhost/testCollectionrecent_messages', function(err, adb) {
             db = adb;
             done(err);
         });
