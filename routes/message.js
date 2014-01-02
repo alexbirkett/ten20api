@@ -47,7 +47,7 @@ var addMessage = function(userId, trackerId, message, timestampNow, callback) {
         timestamp: timestampNow,
         message: message,
         trackerId: trackerId,
-        userId: userId
+        user: userId
     };
     getMessageCollection().insert(object, callback);
 };

@@ -118,7 +118,14 @@ describe('test trips', function () {
                     assert.equal(body.items[1].messages[3].index, 9);
                     assert.equal(body.items[1].messages[4].index, 10);
                     assert.equal(body.items[1].messages[5].index, 11);
-                    done();
+
+
+                    request.get({url: url + '/recent_messages?trackerId=528538f0d8d584853c000002', json: true }, function (error, response, body) {
+                        assert.equal(200, response.statusCode);
+                        assert.equal(body.items[0].message.index, 12);
+                        done();
+                    });
+
                 });
             }
         );
@@ -158,7 +165,12 @@ describe('test trips', function () {
                     assert.equal(body.items[3].messages[0].index, 9);
                     assert.equal(body.items[3].messages[1].index, 10);
                     assert.equal(body.items[3].messages[2].index, 11);
-                    done();
+
+                    request.get({url: url + '/recent_messages?trackerId=528538f0d8d584853c000003', json: true }, function (error, response, body) {
+                        assert.equal(200, response.statusCode);
+                        assert.equal(body.items[0].message.index, 12);
+                        done();
+                    });
                 });
             }
         );
