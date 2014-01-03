@@ -47,7 +47,7 @@ var addMessage = function(userId, trackerId, message, timestampNow, callback) {
         timestamp: timestampNow,
         message: message,
         trackerId: trackerId,
-        user: userId
+        userId: userId
     };
     getMessageCollection().insert(object, callback);
 };
@@ -95,13 +95,15 @@ var convertMessagesToTrips = function(trackerId, userId, callback) {
         var cursor = getMessageCollection().find({trackerId: trackerId}, undefined, sort);
         cursor.toArray(callback);
     }, function(docs, callback) {
+        console.log('adding trip ');
         var data = {
             messages: buildMessageArray(docs),
             startTime: new Date(docs[0].timestamp),
             endTime: new Date(docs[docs.length - 1].timestamp),
-            user: userId,
+            userId: userId,
             trackerId: trackerId
         };
+        console.log(data);
         getTripCollection().insert(data, callback);
     }, function(result, callback) {
         getMessageCollection().remove({trackerId: trackerId}, callback);
@@ -112,7 +114,7 @@ var convertMessagesToTrips = function(trackerId, userId, callback) {
 
 var handleIdChanged = function(doc) {
     var obj = outstandingRequests[doc._id];
-    if (obj &&  obj.user.equals(doc.user)) {
+    if (obj &&  obj.userId.equals(doc.userId)) {
         obj.res.json(doc);
 
         // remove all keys from outstandingRequests that point to obj
@@ -157,11 +159,11 @@ var addRequest = function(id, request) {
     outstandingRequests[id] = request;
 };
 
-var createRequest =  function(req, res, user) {
+var createRequest =  function(req, res, userId) {
     var request = {
         req: req,
         res: res,
-        user: user,
+        userId: userId,
         timestamp: util.currentTimeMillis()
     };
     return request;
@@ -188,12 +190,12 @@ module.exports =
                     isConversionRequired(trackerDoc._id, trackerDoc.tripDuration, timestampNow, callback);
                 }, function(conversionRequired, callback) {
                     if (conversionRequired) {
-                        convertMessagesToTrips(trackerDoc._id, trackerDoc.user, callback);
+                        convertMessagesToTrips(trackerDoc._id, trackerDoc.userId, callback);
                     } else {
                         callback(null);
                     }
                 }, function(callback) {
-                    addMessage(trackerDoc.user, trackerDoc._id, message, timestampNow, callback);
+                    addMessage(trackerDoc.userId, trackerDoc._id, message, timestampNow, callback);
                 }
                 ], function(err) {
                     responseTimes.addTime(new Date().getTime() - timeBefore);
@@ -226,7 +228,7 @@ module.exports =
                 }
             },
             get: function (req, res) {
-                var query = { user: req.user._id };
+                var query = { userId: req.user._id };
                 var request = createRequest(req, res, req.user._id);
                 findObjects(query, function(err, objects) {
                     for (var i = 0; i < objects.length; i++) {
