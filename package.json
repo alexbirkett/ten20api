@@ -13,7 +13,8 @@
     "passport-local": "0.1.6",
     "express-dry-router": "0.1.1",
     "async": "0.2.9",
-    "connect-mongo": "0.3.3"
+    "connect-mongo": "0.3.3",
+    "optimist": "0.6.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
