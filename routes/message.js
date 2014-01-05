@@ -246,4 +246,4 @@ var printAverageResponseTime = function() {
     setTimeout(printAverageResponseTime, 1000);
 };
 
-printAverageResponseTime();
+//printAverageResponseTime();
