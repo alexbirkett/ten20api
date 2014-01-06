@@ -247,4 +247,55 @@ describe('test query', function () {
             done();
         });
     });
+
+    it('should delete all items in collection', function (done) {
+        request.del(collectionUrl, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+            request.get({url:collectionUrl, json: true}, function (error, response, body) {
+                assert.equal(200, response.statusCode);
+                assert.equal(0, body.items.length);
+                done();
+            });
+        });
+    });
+
+    it('should store 1000 items in response to POST', function (done) {
+
+        var objectArray = [];
+
+        for (var i = 0; i < 1000; i++) {
+            objectArray[i] = { name: 'item' + i }
+        }
+
+        request.post({url: collectionUrl, json: objectArray }, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+
+            request.get({url:collectionUrl, json: true}, function (error, response, body) {
+                assert.equal(response.statusCode, 200);
+                assert.equal(body.items.length, 1000);
+
+                for (var i = 0; i < 1000; i++) {
+                    assert.equal(body.items[i].name, 'item' + i);
+                }
+
+                done();
+            });
+
+        });
+    });
+
+
+    it('should respect limit parameter', function (done) {
+        request.get({url:collectionUrl + '?limit=100', json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 100);
+
+            for (var i = 0; i < 100; i++) {
+                assert.equal(body.items[i].name, 'item' + i);
+            }
+            done();
+        });
+    });
+
+
 });
