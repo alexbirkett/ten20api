@@ -1,20 +1,20 @@
 var async = require('async');
 var configureDryRoutes = require('express-dry-router');
-var user = require('../routes/user');
-var collectionApi = require('../lib/collection-api');
-var databaseUtils = require('../lib/database-utils');
+var user = require('../../routes/user');
+var collectionApi = require('../../lib/collection-api');
+var databaseUtils = require('../../lib/database-utils');
 var should = require('should');
 var requestApi = require('request');
 var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
-var server = require('../server');
+var server = require('../../server');
 var assert = require('assert');
 var async = require('async');
-var dropDatabase = require('../lib/drop-database');
+var dropDatabase = require('../../lib/drop-database');
 
 var port = 3007;
 
 var url = 'http://localhost:' + port;
-var auth = require('./helper/auth')(url, request);
+var auth = require('./../helper/auth')(url, request);
 
 
 var getCollectionRoute = function (collection, indexes, callback) {
