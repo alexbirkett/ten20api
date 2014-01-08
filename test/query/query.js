@@ -264,7 +264,7 @@ describe('test query', function () {
         var objectArray = [];
 
         for (var i = 0; i < 1000; i++) {
-            objectArray[i] = { name: 'item' + i }
+            objectArray[i] = { name: 'item' + i , inverseIndex: (999 - i)}
         }
 
         request.post({url: collectionUrl, json: objectArray }, function (error, response, body) {
@@ -281,6 +281,57 @@ describe('test query', function () {
                 done();
             });
 
+        });
+    });
+
+    it('should respect descending sort order', function (done) {
+        request.get({url:collectionUrl + '?sortBy=_id$desc', json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1000);
+
+            for (var i = 0; i < 1000; i++) {
+                assert.equal(body.items[i].name, 'item' + (999 - i));
+            }
+
+            done();
+        });
+    });
+
+    it('should respect ascending sort order', function (done) {
+        request.get({url:collectionUrl + '?sortBy=_id$asc', json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1000);
+
+            for (var i = 0; i < 1000; i++) {
+                assert.equal(body.items[i].name, 'item' + i);
+            }
+
+            done();
+        });
+    });
+
+    it('should ignore empty sort order', function (done) {
+        request.get({url:collectionUrl + '?sortBy=', json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1000);
+
+            for (var i = 0; i < 1000; i++) {
+                assert.equal(body.items[i].name, 'item' + i);
+            }
+
+            done();
+        });
+    });
+
+    it('should ignore empty order direction', function (done) {
+        request.get({url:collectionUrl + '?sortBy=inverseIndex', json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1000);
+
+            for (var i = 0; i < 1000; i++) {
+                assert.equal(body.items[i].name, 'item' + i);
+            }
+            done();
         });
     });
 
@@ -327,5 +378,8 @@ describe('test query', function () {
             done();
         });
     });
+
+
+
 
 });
