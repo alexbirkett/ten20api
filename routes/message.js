@@ -42,9 +42,8 @@ var updateTracker = function (serial, message, callback) {
 };
 
 var addMessage = function(userId, trackerId, message, timestampNow, callback) {
-    message.receivedTimestamp = timestampNow;
     var object = {
-        timestamp: timestampNow,
+        receivedTime: new Date(timestampNow),
         message: message,
         trackerId: trackerId,
         userId: userId
@@ -73,7 +72,7 @@ var isConversionRequired = function(trackerId, tripDuration, timestampNow, callb
         if (!tripDuration) {
             tripDuration = DEFAULT_TRIP_DURATION;
         }
-        callback(null, doc && doc.timestamp + tripDuration <= timestampNow);
+        callback(null, doc && doc.receivedTime.getTime() + tripDuration <= timestampNow);
     })
 };
 
@@ -86,8 +85,6 @@ var buildMessageArray = function(messages) {
 };
 
 var convertMessagesToTrips = function(trackerId, userId, callback) {
-
-
     async.waterfall([function(callback) {
         var sort = {
             "sort": [['_id','asc']]
@@ -98,8 +95,8 @@ var convertMessagesToTrips = function(trackerId, userId, callback) {
         console.log('adding trip ');
         var data = {
             messages: buildMessageArray(docs),
-            startTime: new Date(docs[0].timestamp),
-            endTime: new Date(docs[docs.length - 1].timestamp),
+            startTime: docs[0].receivedTime,
+            endTime: docs[docs.length - 1].receivedTime,
             userId: userId,
             trackerId: trackerId
         };
