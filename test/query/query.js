@@ -285,6 +285,7 @@ describe('test query', function () {
     });
 
 
+    var lastId;
     it('should respect limit parameter', function (done) {
         request.get({url:collectionUrl + '?limit=100', json: true}, function (error, response, body) {
             assert.equal(response.statusCode, 200);
@@ -293,9 +294,38 @@ describe('test query', function () {
             for (var i = 0; i < 100; i++) {
                 assert.equal(body.items[i].name, 'item' + i);
             }
+
+            lastId = body.items[99]._id;
             done();
         });
     });
 
+    var firstId;
+    it('should respect after parameter', function (done) {
+        request.get({url:collectionUrl + '?limit=100&_id=after$' + lastId, json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 100);
+
+            for (var i = 0; i < 100; i++) {
+                assert.equal(body.items[i].name, 'item' + (i + 100));
+            }
+
+            firstId = body.items[0]._id;
+            done();
+        });
+    });
+
+    it('should respect before parameter - we need sort to test this properly', function (done) {
+        request.get({url:collectionUrl + '?limit=10&_id=before$' + firstId, json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 10);
+
+            for (var i = 0; i < 10; i++) {
+                assert.equal(body.items[i].name, 'item' + i);
+            }
+
+            done();
+        });
+    });
 
 });
