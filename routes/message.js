@@ -76,14 +76,6 @@ var isConversionRequired = function(trackerId, tripDuration, timestampNow, callb
     })
 };
 
-var buildMessageArray = function(messages) {
-    var messageArray = [];
-    messages.forEach(function(messageContainer) {
-       messageArray.push(messageContainer.message);
-    });
-    return messageArray;
-};
-
 var convertMessagesToTrips = function(trackerId, userId, callback) {
     async.waterfall([function(callback) {
         var sort = {
@@ -92,15 +84,13 @@ var convertMessagesToTrips = function(trackerId, userId, callback) {
         var cursor = getMessageCollection().find({trackerId: trackerId}, undefined, sort);
         cursor.toArray(callback);
     }, function(docs, callback) {
-        console.log('adding trip ');
         var data = {
-            messages: buildMessageArray(docs),
+            messages: docs,
             startTime: docs[0].receivedTime,
             endTime: docs[docs.length - 1].receivedTime,
             userId: userId,
             trackerId: trackerId
         };
-        console.log(data);
         getTripCollection().insert(data, callback);
     }, function(result, callback) {
         getMessageCollection().remove({trackerId: trackerId}, callback);
