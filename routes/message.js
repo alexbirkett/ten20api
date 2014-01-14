@@ -27,9 +27,22 @@ var getMessageCollection = function () {
     return db.getDb().collection('messages');
 };
 
-var updateTracker = function (serial, message, callback) {
+var isValidLocation = function(location) {
+    return (location.latitude && location.longitude);
+}
+
+
+var updateTracker = function (serial, message, timestampNow, callback) {
     var query = { serial: serial};
-    var data = { $set: { lastMessage: message } };
+    var data = {
+        $set: {
+            lastMessage: message,
+            lastUpdate: timestampNow
+        } };
+
+    if (message.location && isValidLocation(message.location)) {
+        data.$set.location = message.location;
+    }
     var timeBefore = new Date().getTime();
     getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
         updateTrackerTimes.addTime(new Date().getTime() - timeBefore);
@@ -168,7 +181,7 @@ module.exports =
                 var message = req.body;
                 var trackerDoc;
                 async.waterfall([function(callback) {
-                    updateTracker(req.params.id, message, callback);
+                    updateTracker(req.params.id, message,timestampNow, callback);
                 }, function(pTrackerDoc, callback) {
                     trackerDoc = pTrackerDoc;
                     updateTrackerTimesAsync.addTime(new Date().getTime() - timeBefore);

@@ -46,15 +46,19 @@ var tracker3 = {
 };
 
 var messageUpdate1 = {
-    timestamp: 1385473735305,
-    latitude: 52.710074934026935,
-    longitude: -1.8910935332479069
+    timestamp: new Date(1385473735306),
+    location : {
+        latitude: 52.710074934026935,
+        longitude: -1.8910935332479069
+    }
 };
 
 var messageUpdate2 = {
-    timestamp: 1385473735305,
-    latitude: 53.710074934026935,
-    longitude: -1.8910935332479069
+    timestamp: new Date(1385473735307),
+    location : {
+        latitude: 53.710074934026936,
+        longitude: -1.8910935332479069
+    }
 };
 
 var handleComplete = function(complete, callback) {
@@ -133,6 +137,72 @@ describe('test message endpoint', function () {
         });
     });
 
+    it('should be possible to update the tracker', function (done) {
+        request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+            request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
+                assert.equal(response.statusCode, 200);
+
+                assert.equal(body.location.latitude, 52.710074934026935);
+                assert.equal(body.location.longitude, -1.8910935332479069);
+                assert.equal(body.lastMessage.location.latitude, 52.710074934026935);
+                assert.equal(body.lastMessage.location.longitude, -1.8910935332479069);
+
+                done();
+            });
+        });
+    });
+
+
+    it('should not update location if latitude not set', function (done) {
+
+        var update = {
+            timestamp: new Date(1385473735308),
+            location : {
+                longitude: -2.8910935332479069
+            }
+        };
+
+        request.post({url: url + '/message/' + tracker1.serial, json: update }, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+            request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
+                assert.equal(response.statusCode, 200);
+
+                assert.equal(body.location.latitude, 52.710074934026935);
+                assert.equal(body.location.longitude, -1.8910935332479069);
+                assert.equal(body.lastMessage.location.latitude, undefined);
+                assert.equal(body.lastMessage.location.longitude, -2.8910935332479069);
+
+                done();
+            });
+        });
+    });
+
+    it('should not update location if longitude not set', function (done) {
+
+        var update = {
+            timestamp: new Date(1385473735308),
+            location : {
+                latitude: -2.8910935332479069
+            }
+        };
+
+        request.post({url: url + '/message/' + tracker1.serial, json: update }, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+            request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
+                assert.equal(response.statusCode, 200);
+
+                assert.equal(body.location.latitude, 52.710074934026935);
+                assert.equal(body.location.longitude, -1.8910935332479069);
+                assert.equal(body.lastMessage.location.longitude, undefined);
+                assert.equal(body.lastMessage.location.latitude, -2.8910935332479069);
+
+                done();
+            });
+        });
+    });
+
+
     it('updating location by serial should trigger notify_changed on specified tracker owned by user', function (done) {
 
         var complete = {
@@ -145,7 +215,7 @@ describe('test message endpoint', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.lastMessage.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.location.latitude)
             handleComplete(complete, done);
         });
 
@@ -173,7 +243,7 @@ describe('test message endpoint', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.lastMessage.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.location.latitude)
             handleComplete(complete, done);
         });
 
@@ -201,7 +271,7 @@ describe('test message endpoint', function () {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.lastMessage.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.location.latitude)
             handleComplete(complete, done);
         });
 
@@ -233,7 +303,7 @@ describe('test message endpoint', function () {
             assert(complete.update_by_serial2_started);
             assert( complete.notify_changed2);
             assert.equal(200, response.statusCode);
-            assert.equal(52.710074934026935, body.lastMessage.latitude)
+            assert.equal(52.710074934026935, body.lastMessage.location.latitude);
             handleComplete(complete, done);
         });
 
@@ -243,7 +313,7 @@ describe('test message endpoint', function () {
             assert(!complete.update_by_serial2_started);
             assert(!complete.notify_changed1);
             assert.equal(200, response.statusCode);
-            assert.equal(53.710074934026935, body.lastMessage.latitude)
+            assert.equal(53.710074934026935, body.lastMessage.location.latitude);
             handleComplete(complete, done);
         });
 
