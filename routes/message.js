@@ -85,7 +85,7 @@ var isConversionRequired = function(trackerId, tripDuration, timestampNow, callb
         if (!tripDuration) {
             tripDuration = DEFAULT_TRIP_DURATION;
         }
-        callback(null, doc && doc.receivedTime.getTime() + tripDuration <= timestampNow);
+        callback(null, doc && doc.receivedTime && doc.receivedTime.getTime() + tripDuration <= timestampNow);
     })
 };
 
