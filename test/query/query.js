@@ -379,7 +379,67 @@ describe('test query', function () {
         });
     });
 
+    it('should delete all items in collection again', function (done) {
+        request.del(collectionUrl, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+            request.get({url:collectionUrl, json: true}, function (error, response, body) {
+                assert.equal(200, response.statusCode);
+                assert.equal(0, body.items.length);
+                done();
+            });
+        });
+    });
 
 
+    it('should store items with dates in response to POST', function (done) {
+        var items = [
+            {
+                timestamp: new Date('2001-09-09T01:46:40Z')
+            },
+            {
+                timestamp: new Date('2001-09-09T01:46:41Z')
+            },
+            {
+                timestamp: new Date('2001-09-09T01:46:42Z')
+            }
+        ];
 
+        request.post({url: collectionUrl, json: items }, function (error, response, body) {
+            assert.equal(200, response.statusCode);
+            done();
+
+
+        });
+    });
+
+
+    it('should possible to find one item added before 2001-09-09T01:46:41Z', function (done) {
+        request.get({url: collectionUrl + '?timestamp=before$date:2001-09-09T01:46:41Z', json: true}, function (error, response, body) {
+
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1);
+
+            done();
+        });
+    });
+
+    it('should possible to find one item added before 2001-09-09T01:46:41Z', function (done) {
+        request.get({url: collectionUrl + '?timestamp=before$date:2001-09-09T01:46:41Z', json: true}, function (error, response, body) {
+
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1);
+
+            done();
+        });
+    });
+
+    it('should possible to find two items added after timestamp 1,000,000,000,000', function (done) {
+        request.get({url: collectionUrl + '?timestamp=after$timestamp:1000000000000', json: true}, function (error, response, body) {
+
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 2);
+
+            done();
+        });
+    });
 });
