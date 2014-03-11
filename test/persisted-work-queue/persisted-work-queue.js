@@ -16,11 +16,7 @@ var callCount = 0;
 var ONE_MINUTE = 60 * 1000;
 var time = +new Date('Tue Sep 05 1978 10:00:00 GMT');
 
-util.currentTimeMillis = function() {
-    var currentTime = time;
-    time += ONE_MINUTE;
-    return currentTime;
-};
+var currentTimeMillis;
 
 describe('persisted work queue', function () {
 
@@ -32,12 +28,22 @@ describe('persisted work queue', function () {
             MongoClient.connect(dbUrl, callback);
         }, function (adb, callback) {
             db.setDb(adb);
+            currentTimeMillis =  util.currentTimeMillis;
+
+            util.currentTimeMillis = function() {
+                var currentTime = time;
+                time += ONE_MINUTE;
+                return currentTime;
+            };
+
             callback();
         }], done);
 
     });
 
     after(function (done) {
+
+        util.currentTimeMillis = currentTimeMillis;
         if (db.getDb()) {
             db.getDb().close();
         }
