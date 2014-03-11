@@ -3,9 +3,8 @@ var config = require('../lib/config.js');
 var util = require('../lib/util.js');
 var async = require('async');
 var ResponseTimes = require('../lib/response-times');
-
 var FunctionCallCounter = require('../lib/function-call-counter');
-
+var tripBuilder = require('../lib/trip-builder');
 
 var responseTimes = new ResponseTimes(100);
 var updateTrackerTimes = new ResponseTimes(100);
@@ -19,10 +18,6 @@ var getTrackerCollection = function () {
     return db.getDb().collection('trackers');
 };
 
-var getTripCollection = function () {
-    return db.getDb().collection('trips');
-};
-
 var getMessageCollection = function () {
     return db.getDb().collection('messages');
 };
@@ -31,6 +26,46 @@ var isValidLocation = function(location) {
     return (location.latitude && location.longitude);
 }
 
+var setTrackerDefaultValuesIfRequired = function(trackerDoc, timestampNow, callback) {
+
+    var update = false;
+    var data = {
+        $set: {
+        }
+    };
+
+    if (!trackerDoc.tripDuration) {
+        update = true;
+        data.$set.tripDuration = DEFAULT_TRIP_DURATION;
+    }
+
+    if (!trackerDoc.tripEndTimestamp) {
+        var tripDuration = trackerDoc.tripDuration;
+        if (!tripDuration) {
+            tripDuration = DEFAULT_TRIP_DURATION;
+        }
+        update = true;
+        data.$set.tripEndTimestamp = new Date(timestampNow + tripDuration);
+    }
+
+    if (!trackerDoc.tripStartTimestamp) {
+        update = true;
+        data.$set.tripStartTimestamp = new Date(timestampNow);
+    }
+
+    if (update) {
+        var query = { _id: trackerDoc._id};
+        getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
+            // if the query does not find any documents, findAndModify can call back with no error and a null document
+            if (!doc) {
+                err = 'not found';
+            }
+            callback(err, doc);
+        });
+    } else {
+        callback(null, trackerDoc);
+    }
+};
 
 var updateTracker = function (serial, message, timestampNow, callback) {
     var query = { serial: serial};
@@ -61,55 +96,60 @@ var addMessage = function(userId, trackerId, message, timestampNow, callback) {
         trackerId: trackerId,
         userId: userId
     };
-    getMessageCollection().insert(object, callback);
+    getMessageCollection().insert(object, function(err) {
+        callback(err);
+    });
 };
 
-var findOldestMessage = function(trackerId, callback) {
-    var options = {
-        sort: [['_id','asc']],
-        limit: 1
-    };
+var addTripBuilderJob = function(trackerDoc, callback) {
+    var data = {
+        tripStartTimestamp: trackerDoc.tripStartTimestamp,
+        tripEndTimestamp: trackerDoc.tripEndTimestamp,
+        trackerId: trackerDoc._id
+    }
+    console.log('addTripBuilderJob ');
+    console.log(data);
+    tripBuilder.addJob(data, function(err) {
 
-    var cursor = getMessageCollection().find({trackerId: trackerId}, undefined, options);
-    cursor.toArray(function(err, docs) {
-        var doc;
-        if (docs) {
-            doc = docs[0];
+        tripBuilder.tickle(function(err) {
+            console.log('tickle complete ' + err);
+        });
+        callback(err);
+    });
+
+};
+
+var updateTripStartEndTime = function(trackerDoc, timestampNow, callback) {
+    var query = { _id: trackerDoc._id};
+    var data = {
+        $set: {
+            tripStartTimestamp: new Date(timestampNow),
+            tripEndTimestamp: new Date(timestampNow + trackerDoc.tripDuration)
+        }
+    };
+    getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
+        // if the query does not find any documents, findAndModify can call back with no error and a null document
+        if (!doc) {
+            err = 'not found';
         }
         callback(err, doc);
     });
 };
 
-var isConversionRequired = function(trackerId, tripDuration, timestampNow, callback) {
-    findOldestMessage(trackerId, function(err, doc) {
-        if (!tripDuration) {
-            tripDuration = DEFAULT_TRIP_DURATION;
-        }
-        callback(null, doc && doc.receivedTime && doc.receivedTime.getTime() + tripDuration <= timestampNow);
-    })
-};
-
-var convertMessagesToTrips = function(trackerId, userId, callback) {
-    async.waterfall([function(callback) {
-        var sort = {
-            "sort": [['_id','asc']]
-        };
-        var cursor = getMessageCollection().find({trackerId: trackerId}, undefined, sort);
-        cursor.toArray(callback);
-    }, function(docs, callback) {
-        var data = {
-            messages: docs,
-            startTime: docs[0].receivedTime,
-            endTime: docs[docs.length - 1].receivedTime,
-            userId: userId,
-            trackerId: trackerId
-        };
-        getTripCollection().insert(data, callback);
-    }, function(result, callback) {
-        getMessageCollection().remove({trackerId: trackerId}, callback);
-    }], function(err) {
-        callback(err);
-    });
+var rollOverTripIfRequired = function(trackerDoc, timestampNow, callback) {
+    console.log('trip ends  ' + new Date(trackerDoc.tripEndTimestamp) + ' timestampNow ' + new Date(timestampNow));
+    if (trackerDoc.tripEndTimestamp < timestampNow) {
+        console.log('rolling over trip');
+        async.parallel([function(callback) {
+            addTripBuilderJob(trackerDoc, callback);
+        }, function(callback) {
+            updateTripStartEndTime(trackerDoc, timestampNow, callback);
+        }], function(err) {
+            callback(err);
+        });
+    } else {
+        callback(null);
+    }
 };
 
 var handleIdChanged = function(doc) {
@@ -154,7 +194,6 @@ var findObjects = function(query, callback) {
     });
 };
 
-
 var addRequest = function(id, request) {
     outstandingRequests[id] = request;
 };
@@ -177,31 +216,22 @@ module.exports =
                 responseCounter.called();
                 var timestampNow = util.currentTimeMillis();
                 var timeBefore = new Date().getTime();
-                var timeBeforeAddMessageToTrip;
                 var message = req.body;
                 var trackerDoc;
                 async.waterfall([function(callback) {
-                    updateTracker(req.params.id, message,timestampNow, callback);
+                    updateTracker(req.params.id, message, timestampNow, callback);
+                }, function(trackerDoc, callback) {
+                    updateTrackerTimesAsync.addTime(new Date().getTime() - timeBefore);
+                    setTrackerDefaultValuesIfRequired(trackerDoc, timestampNow, callback)
                 }, function(pTrackerDoc, callback) {
                     trackerDoc = pTrackerDoc;
-                    updateTrackerTimesAsync.addTime(new Date().getTime() - timeBefore);
-                    handleIdChanged(trackerDoc);
-                    timeBeforeAddMessageToTrip = new Date().getTime();
-                    isConversionRequired(trackerDoc._id, trackerDoc.tripDuration, timestampNow, callback);
-                }, function(conversionRequired, callback) {
-                    if (conversionRequired) {
-                        convertMessagesToTrips(trackerDoc._id, trackerDoc.userId, callback);
-                    } else {
-                        callback(null);
-                    }
-                }, function(callback) {
                     addMessage(trackerDoc.userId, trackerDoc._id, message, timestampNow, callback);
-                }
-                ], function(err) {
+                }, function(callback) {
+                    rollOverTripIfRequired(trackerDoc, timestampNow, callback);
+                    handleIdChanged(trackerDoc);
+                }], function(err) {
                     responseTimes.addTime(new Date().getTime() - timeBefore);
-                    addMessageToTripTimesAsync.addTime(new Date().getTime() - timeBeforeAddMessageToTrip);
                     if (err) {
-
                         if (err === 'not found') {
                             res.json(404, {});
                         } else {
@@ -211,7 +241,6 @@ module.exports =
                         res.json(200, {});
                     }
                 });
-
             }
         },
         notify: {
@@ -241,7 +270,6 @@ module.exports =
 };
 
 var printAverageResponseTime = function() {
-
     console.log('called '+ responseCounter.count() + ' per second average response time ' + responseTimes.calculateAverage() + ' updateTrackerTimes ' + updateTrackerTimes.calculateAverage() + ' ' + updateTrackerTimesAsync.calculateAverage() + ' addMessageToTrip ' + addMessageToTripTimes.calculateAverage() + ' ' + addMessageToTripTimesAsync.calculateAverage() );
     setTimeout(printAverageResponseTime, 1000);
 };

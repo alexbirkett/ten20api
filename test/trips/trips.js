@@ -11,13 +11,12 @@ var util = require('../../lib/util');
 
 var callCount = 0;
 
-var ONE_HOUR = 60 * 60 * 1000;
+var ONE_MINUTE = 60 * 1000;
+var SIX_HOURS = 1000 * 60 * 60 * 6;
+var THREE_HOURS = 1000 * 60 * 60 * 3;
+var time = +new Date('Tue Sep 05 1978 10:00:00 GMT');
 
-util.currentTimeMillis = function() {
-    var time = 273837600000 + (callCount * ONE_HOUR);
-    ++callCount;
-    return time;
-};
+
 
 var port = 3013;
 
@@ -40,12 +39,9 @@ var tracker2 = {
     tripDuration: 3 * 60 * 60 * 1000
 };
 
+var locationIndex = 0;
 
-var locationUpdate = {
-    timestamp: 1385473735305,
-    latitude: 52.710074934026935,
-    longitude: -1.8910935332479069
-};
+var currentTimeMillis;
 
 describe('test trips', function () {
 
@@ -59,6 +55,13 @@ describe('test trips', function () {
             auth.signUp(credential, callback);
         },function (callback) {
             auth.signIn(credential, callback);
+            currentTimeMillis = util.currentTimeMillis;
+            util.currentTimeMillis = function() {
+                var currentTime = time;
+                time += ONE_MINUTE;
+                return currentTime;
+            };
+
         }], done);
     });
 
@@ -67,6 +70,7 @@ describe('test trips', function () {
             auth.signOut(callback);
         }, function (callback) {
             ///server.close(callback);
+            util.currentTimeMillis = currentTimeMillis;
             callback();
         }], done);
 
@@ -86,94 +90,120 @@ describe('test trips', function () {
         });
     });
 
-
-    it('with no trip duration set on the tracker, 12 updates 1 hour apart should result in two trip documents each containing 6 updates', function (done) {
-
-        var count = 0;
+    var sendLocationUpdate = function (count, serial, callback) {
+        var index = 0;
         async.whilst(
-            function () { return count < 13; },
+            function () {
+                return index < count;
+            },
             function (callback) {
-                locationUpdate.index = count;
-                count++;
-                request.post({url: url + '/message/' + tracker1.serial, json: locationUpdate }, function (error, response, body) {
+                var message = {
+                    index: locationIndex++
+                };
+                console.log('post ' + index);
+                request.post({url: url + '/message/' + serial, json: message }, function (error, response, body) {
                     assert.equal(200, response.statusCode);
+                    index++;
                     callback();
                 });
-
             },
             function (err) {
-                assert(!err);
-                request.get({url: url + '/trips?trackerId=528538f0d8d584853c000002', json: true }, function (error, response, body) {
-                    assert.equal(200, response.statusCode);
-                    assert.equal(body.items[0].messages[0].message.index, 0);
-                    assert.equal(body.items[0].messages[1].message.index, 1);
-                    assert.equal(body.items[0].messages[2].message.index, 2);
-                    assert.equal(body.items[0].messages[3].message.index, 3);
-                    assert.equal(body.items[0].messages[4].message.index, 4);
-                    assert.equal(body.items[0].messages[5].message.index, 5);
+                callback(err);
+            });
+    };
 
-                    assert.equal(body.items[1].messages[0].message.index, 6);
-                    assert.equal(body.items[1].messages[1].message.index, 7);
-                    assert.equal(body.items[1].messages[2].message.index, 8);
-                    assert.equal(body.items[1].messages[3].message.index, 9);
-                    assert.equal(body.items[1].messages[4].message.index, 10);
-                    assert.equal(body.items[1].messages[5].message.index, 11);
+    it('with no trip duration set on the tracker trips should roll over every 6 hours', function (done) {
 
-
-                    request.get({url: url + '/recent_messages?trackerId=528538f0d8d584853c000002', json: true }, function (error, response, body) {
-                        assert.equal(200, response.statusCode);
-                        assert.equal(body.items[0].message.index, 12);
-                        done();
-                    });
-
-                });
-            }
-        );
+        async.waterfall([
+        function(callback) {
+            sendLocationUpdate(6, tracker1.serial, callback);
+        }, function(callback) {
+            time += SIX_HOURS;
+            sendLocationUpdate(6, tracker1.serial, callback);
+        }, function(callback) {
+            time += SIX_HOURS;
+            sendLocationUpdate(1, tracker1.serial,  callback);
+        }, function(callback) {
+             setTimeout(callback, 500);
+        }, function(callback) {
+            request.get({url: url + '/trips?trackerId=528538f0d8d584853c000002', json: true }, callback);
+        }, function(response, body, callback) {
+            assert.equal(200, response.statusCode);
+            assert.equal(body.items[0].messages[0].message.index, 0);
+            assert.equal(body.items[0].messages[1].message.index, 1);
+            assert.equal(body.items[0].messages[2].message.index, 2);
+            assert.equal(body.items[0].messages[3].message.index, 3);
+            assert.equal(body.items[0].messages[4].message.index, 4);
+            assert.equal(body.items[0].messages[5].message.index, 5);
+            assert.equal(body.items[1].messages[0].message.index, 6);
+            assert.equal(body.items[1].messages[1].message.index, 7);
+            assert.equal(body.items[1].messages[2].message.index, 8);
+            assert.equal(body.items[1].messages[3].message.index, 9);
+            assert.equal(body.items[1].messages[4].message.index, 10);
+            assert.equal(body.items[1].messages[5].message.index, 11);
+            request.get({url: url + '/recent_messages?trackerId=528538f0d8d584853c000002', json: true }, callback);
+        }, function(response, body, callback) {
+            assert.equal(200, response.statusCode);
+            assert.equal(body.items[0].message.index, 12);
+            callback(null);
+        }], function(err) {
+            assert.ifError(err);
+            done();
+        });
     });
 
 
-    it('with a 3hr trip duraiton on the tracker, 12 updates 1 hour apart should result in 4 trip documents each containing 6 updates', function (done) {
+    it('with a 3hr trip duration, trips should roll over every 3 hours', function (done) {
 
-        var count = 0;
-        async.whilst(
-            function () { return count < 13; },
-            function (callback) {
-                locationUpdate.index = count;
-                count++;
-                request.post({url: url + '/message/' + tracker2.serial, json: locationUpdate }, function (error, response, body) {
-                    assert.equal(200, response.statusCode);
-                    callback();
-                });
 
-            },
-            function (err) {
-                assert(!err);
-                request.get({url: url + '/trips?trackerId=528538f0d8d584853c000003', json: true }, function (error, response, body) {
-                    assert.equal(200, response.statusCode);
-                    assert.equal(body.items[0].messages[0].message.index, 0);
-                    assert.equal(body.items[0].messages[1].message.index, 1);
-                    assert.equal(body.items[0].messages[2].message.index, 2);
+        async.waterfall([
+            function(callback) {
+                locationIndex = 0;
+                sendLocationUpdate(3, tracker2.serial, callback);
+            }, function(callback) {
+                time += THREE_HOURS;
+                sendLocationUpdate(3, tracker2.serial, callback);
+            }, function(callback) {
+                time += THREE_HOURS;
+                sendLocationUpdate(3, tracker2.serial, callback);
+            }, function(callback) {
+                time += THREE_HOURS;
+                sendLocationUpdate(3, tracker2.serial, callback);
+            }, function(callback) {
+                time += THREE_HOURS;
+                sendLocationUpdate(1, tracker2.serial, callback);
+            }, function(callback) {
+                setTimeout(callback, 500);
+            }, function(callback) {
+                request.get({url: url + '/trips?trackerId=528538f0d8d584853c000003', json: true }, callback);
+            }, function(response, body, callback) {
+                assert.equal(200, response.statusCode);
+                console.log(JSON.stringify(body, null, 4));
+                assert.equal(body.items[0].messages[0].message.index, 0);
+                assert.equal(body.items[0].messages[1].message.index, 1);
+                assert.equal(body.items[0].messages[2].message.index, 2);
 
-                    assert.equal(body.items[1].messages[0].message.index, 3);
-                    assert.equal(body.items[1].messages[1].message.index, 4);
-                    assert.equal(body.items[1].messages[2].message.index, 5);
+                assert.equal(body.items[1].messages[0].message.index, 3);
+                assert.equal(body.items[1].messages[1].message.index, 4);
+                assert.equal(body.items[1].messages[2].message.index, 5);
 
-                    assert.equal(body.items[2].messages[0].message.index, 6);
-                    assert.equal(body.items[2].messages[1].message.index, 7);
-                    assert.equal(body.items[2].messages[2].message.index, 8);
+                assert.equal(body.items[2].messages[0].message.index, 6);
+                assert.equal(body.items[2].messages[1].message.index, 7);
+                assert.equal(body.items[2].messages[2].message.index, 8);
 
-                    assert.equal(body.items[3].messages[0].message.index, 9);
-                    assert.equal(body.items[3].messages[1].message.index, 10);
-                    assert.equal(body.items[3].messages[2].message.index, 11);
+                assert.equal(body.items[3].messages[0].message.index, 9);
+                assert.equal(body.items[3].messages[1].message.index, 10);
+                assert.equal(body.items[3].messages[2].message.index, 11);
 
-                    request.get({url: url + '/recent_messages?trackerId=528538f0d8d584853c000003', json: true }, function (error, response, body) {
-                        assert.equal(200, response.statusCode);
-                        assert.equal(body.items[0].message.index, 12);
-                        done();
-                    });
-                });
-            }
-        );
+                request.get({url: url + '/recent_messages?trackerId=528538f0d8d584853c000003', json: true }, callback);
+            }, function(response, body, callback) {
+                assert.equal(200, response.statusCode);
+                assert.equal(body.items[0].message.index, 12);
+                callback(null);
+            }], function(err) {
+            assert.ifError(err);
+            done();
+        });
     });
 
 });
