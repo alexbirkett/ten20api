@@ -412,33 +412,35 @@ describe('test query', function () {
         });
     });
 
-
-    it('should possible to find one item added before 2001-09-09T01:46:41Z', function (done) {
-        request.get({url: collectionUrl + '?timestamp=before$date:2001-09-09T01:46:41Z', json: true}, function (error, response, body) {
-
+    it('should possible to find three items', function (done) {
+        request.get({url: collectionUrl, json: true}, function (error, response, body) {
             assert.equal(response.statusCode, 200);
-            assert.equal(body.items.length, 1);
-
+            assert.equal(body.items.length, 3);
             done();
         });
     });
 
+
     it('should possible to find one item added before 2001-09-09T01:46:41Z', function (done) {
         request.get({url: collectionUrl + '?timestamp=before$date:2001-09-09T01:46:41Z', json: true}, function (error, response, body) {
-
             assert.equal(response.statusCode, 200);
             assert.equal(body.items.length, 1);
+            done();
+        });
+    });
 
+    it('should possible to find one item added before timestamp 1,000,000,001,000', function (done) {
+        request.get({url: collectionUrl + '?timestamp=before$timestamp:1000000001000', json: true}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            assert.equal(body.items.length, 1);
             done();
         });
     });
 
     it('should possible to find two items added after timestamp 1,000,000,000,000', function (done) {
         request.get({url: collectionUrl + '?timestamp=after$timestamp:1000000000000', json: true}, function (error, response, body) {
-
             assert.equal(response.statusCode, 200);
             assert.equal(body.items.length, 2);
-
             done();
         });
     });
