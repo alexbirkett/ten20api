@@ -137,7 +137,6 @@ var updateTripStartEndTime = function(trackerDoc, timestampNow, callback) {
 };
 
 var rollOverTripIfRequired = function(trackerDoc, timestampNow, callback) {
-    console.log('trip ends  ' + new Date(trackerDoc.tripEndTimestamp) + ' timestampNow ' + new Date(timestampNow));
     if (trackerDoc.tripEndTimestamp < timestampNow) {
         console.log('rolling over trip');
         async.parallel([function(callback) {
