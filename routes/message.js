@@ -107,8 +107,6 @@ var addTripBuilderJob = function(trackerDoc, callback) {
         tripEndTimestamp: trackerDoc.tripEndTimestamp,
         trackerId: trackerDoc._id
     }
-    console.log('addTripBuilderJob ');
-    console.log(data);
     tripBuilder.addJob(data, function(err) {
 
         tripBuilder.tickle(function(err) {
