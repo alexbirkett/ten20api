@@ -1,5 +1,6 @@
 var server = require('./server')
 var configRoute = require('./lib/route-config');
+require('./lib/memory-leak');
 
 var optimist = require('optimist');
 var argv = optimist.usage('Usage: $0  --dbname [string] --port [num]').
