@@ -2,16 +2,8 @@ var db = require('../lib/db');
 var config = require('../lib/config.js');
 var util = require('../lib/util.js');
 var async = require('async');
-var ResponseTimes = require('../lib/response-times');
-var FunctionCallCounter = require('../lib/function-call-counter');
 var tripBuilder = require('../lib/trip-builder');
 
-var responseTimes = new ResponseTimes(100);
-var updateTrackerTimes = new ResponseTimes(100);
-var updateTrackerTimesAsync = new ResponseTimes(100);
-var addMessageToTripTimes = new ResponseTimes(100);
-var addMessageToTripTimesAsync = new ResponseTimes(100);
-var responseCounter = new FunctionCallCounter();
 var DEFAULT_TRIP_DURATION = 6 * 60 * 60 * 1000;
 
 var getTrackerCollection = function () {
@@ -80,7 +72,6 @@ var updateTracker = function (serial, message, timestampNow, callback) {
     }
     var timeBefore = new Date().getTime();
     getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
-        updateTrackerTimes.addTime(new Date().getTime() - timeBefore);
         // if the query does not find any documents, findAndModify can call back with no error and a null document
         if (!doc) {
             err = 'not found';
@@ -210,15 +201,12 @@ module.exports =
     message: {
         ":id": {
             post: function (req, res) {
-                responseCounter.called();
                 var timestampNow = util.currentTimeMillis();
-                var timeBefore = new Date().getTime();
                 var message = req.body;
                 var trackerDoc;
                 async.waterfall([function(callback) {
                     updateTracker(req.params.id, message, timestampNow, callback);
                 }, function(trackerDoc, callback) {
-                    updateTrackerTimesAsync.addTime(new Date().getTime() - timeBefore);
                     setTrackerDefaultValuesIfRequired(trackerDoc, timestampNow, callback)
                 }, function(pTrackerDoc, callback) {
                     trackerDoc = pTrackerDoc;
@@ -227,7 +215,6 @@ module.exports =
                     rollOverTripIfRequired(trackerDoc, timestampNow, callback);
                     handleIdChanged(trackerDoc);
                 }], function(err) {
-                    responseTimes.addTime(new Date().getTime() - timeBefore);
                     if (err) {
                         if (err === 'not found') {
                             res.json(404, {});
@@ -266,9 +253,3 @@ module.exports =
     }
 };
 
-var printAverageResponseTime = function() {
-    console.log('called '+ responseCounter.count() + ' per second average response time ' + responseTimes.calculateAverage() + ' updateTrackerTimes ' + updateTrackerTimes.calculateAverage() + ' ' + updateTrackerTimesAsync.calculateAverage() + ' addMessageToTrip ' + addMessageToTripTimes.calculateAverage() + ' ' + addMessageToTripTimesAsync.calculateAverage() );
-    setTimeout(printAverageResponseTime, 1000);
-};
-
-//printAverageResponseTime();
