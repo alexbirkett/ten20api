@@ -1,5 +1,4 @@
 var scrypt = require("scrypt");
-var passport = require('passport');
 var db = require('../lib/db.js');
 var crypto = require('crypto');
 var async = require('async');

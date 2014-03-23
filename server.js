@@ -8,7 +8,6 @@ var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
 var MongoStore = require('connect-mongo')(express);
-var configurePassport = require('./lib/configure-passport');
 var dbSingleton = require('./lib/db');
 
 var server;
@@ -42,7 +41,6 @@ module.exports.startServer = function (port, dbUrl, configRoute, callback) {
                 app.use(express.logger('dev'));
             }
 
-            configurePassport(app, db);
             configRoute(app, callback);
         },
         function(callback) {

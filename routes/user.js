@@ -1,5 +1,4 @@
 var scrypt = require("scrypt");
-var passport = require('passport');
 var db = require('../lib/db.js');
 var maxtime = 0.1;
 var jwt = require('jsonwebtoken');
@@ -8,9 +7,6 @@ var async = require('async');
 var getUserCollection = function () {
     return db.getDb().collection('user');
 };
-
-var secret = 'shhhhhhared-secret';
-
 
 module.exports = {
 
@@ -21,39 +17,7 @@ module.exports = {
                 res.json(req.user);
             }
         },
-        use: authenticationMiddleware.middlewareFunction,
-        useOld: function (req, res, next) {
-            if (req.isAuthenticated()) {
-                next();
-            } else {
-                res.json(401, {message: 'not logged in'});
-            }
-        }
-    },
-    signin: {
-        post: function (req, res, next) {
-            var userInfo = req.body;
-            if (userInfo.remember) {
-                req.session.cookie.maxAge = 2592000000; // 30*24*60*60*1000 Rememeber 'me' for 30 days
-            } else {
-                req.session.cookie.expires = false;
-            }
-
-            passport.authenticate('local', function (err, user, info) {
-                if (err) {
-                    return next(err)
-                }
-                if (!user) {
-                    return res.json(401, info);
-                }
-                req.logIn(user, function (err) {
-                    if (err) {
-                        return next(err);
-                    }
-                    res.json({message: ''});
-                });
-            })(req, res, next);
-        }
+        use: authenticationMiddleware.middlewareFunction
     },
     authenticate: {
         post: function (req, res) {
@@ -80,12 +44,6 @@ module.exports = {
                     }
                 });
 
-        }
-    },
-    signout: {
-        get: function (req, res) {
-            req.logout();
-            res.redirect('/');
         }
     },
     signup: {
