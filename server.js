@@ -7,7 +7,6 @@ var http = require('http')
 var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
-var MongoStore = require('connect-mongo')(express);
 var dbSingleton = require('./lib/db');
 
 var server;
@@ -27,15 +26,6 @@ module.exports.startServer = function (port, dbUrl, configRoute, callback) {
             app.use(express.urlencoded());
             app.use(express.json());
             app.use(express.methodOverride());
-
-            app.use(express.cookieParser('some secret'));
-            app.use(express.session({
-                secret: '1GSrN6oX8cvEzfeecNqm3xgfZZZBj6DQpY',
-                store: new MongoStore({
-                    db: db
-                })
-            }));
-
             if ('development' == app.get('env')) {
                 app.use(express.errorHandler());
                 app.use(express.logger('dev'));
