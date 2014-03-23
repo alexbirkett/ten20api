@@ -1,16 +1,12 @@
 var async = require('async');
 var user = require('../../routes/user');
 var requestApi = require('request');
-var request = requestApi.defaults({followRedirect: false, headers: {
-    'Catwoofter': 'Bearer '
-}});
+var request = requestApi.defaults({followRedirect: false });
 var server = require('../../server');
 var assert = require('assert');
 var dropDatabase = require('../../lib/drop-database');
 var configRoute = require('../../lib/route-config');
 
-
-console.log(request);
 
 var port = 3012;
 
