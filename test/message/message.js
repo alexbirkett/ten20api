@@ -6,8 +6,7 @@ config.setLongPollCleanupInterval(40);
 var async = require('async');
 var user = require('../../routes/user');
 var requestApi = require('request');
-var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
-var request2 = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
+var request = requestApi.defaults({followRedirect: false});
 var server = require('../../server');
 var assert = require('assert');
 var dropDatabase = require('../../lib/drop-database');
@@ -19,7 +18,6 @@ var port = 3008;
 
 var url = 'http://localhost:' + port;
 var auth = require('./../helper/auth')(url, request);
-var auth2 = require('./../helper/auth')(url, request2);
 
 var dbUrl = 'mongodb://localhost/testLocation';
 
@@ -105,18 +103,27 @@ describe('test message endpoint', function () {
         });
     });
 
+    var credential1request;
+    it('setup: authenticate with credential1', function (done) {
+        auth.authenticate(credential1, function(err, request) {
+            assert.ifError(err);
+            credential1request = request;
+            done();
+        });
+    });
 
-    it('admin sign in', function (done) {
-        async.series([function (callback) {
-            auth.signIn(credential1, callback);
-        },function (callback) {
-            auth2.signIn(credential2, callback);
-        }], done);
+    var credential2request;
+    it('setup: authenticate with credential2', function (done) {
+        auth.authenticate(credential2, function(err, request) {
+            assert.ifError(err);
+            credential2request = request;
+            done();
+        });
     });
 
 
     it('should be possible to add a tracker', function (done) {
-        request.put({url: url + '/trackers/528538f0d8d584853c000002', json: tracker1 }, function (error, response, body) {
+        credential1request.put({url: url + '/trackers/528538f0d8d584853c000002', json: tracker1 }, function (error, response, body) {
             assert.equal(200, response.statusCode);
             done();
         });
@@ -124,23 +131,23 @@ describe('test message endpoint', function () {
 
 
     it('should be possible to add a tracker', function (done) {
-        request.put({url: url + '/trackers/528538f0d8d584853c000003', json: tracker2 }, function (error, response, body) {
+        credential1request.put({url: url + '/trackers/528538f0d8d584853c000003', json: tracker2 }, function (error, response, body) {
             assert.equal(200, response.statusCode);
             done();
         });
     });
 
     it('should be possible to add a tracker', function (done) {
-        request2.put({url: url + '/trackers/528538f0d8d584853c000004', json: tracker3 }, function (error, response, body) {
+        credential2request.put({url: url + '/trackers/528538f0d8d584853c000004', json: tracker3 }, function (error, response, body) {
             assert.equal(200, response.statusCode);
             done();
         });
     });
 
     it('should be possible to update the tracker', function (done) {
-        request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
+        credential1request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
             assert.equal(200, response.statusCode);
-            request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
+            credential1request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
                 assert.equal(response.statusCode, 200);
 
                 assert.equal(body.location.latitude, 52.710074934026935);
@@ -163,9 +170,9 @@ describe('test message endpoint', function () {
             }
         };
 
-        request.post({url: url + '/message/' + tracker1.serial, json: update }, function (error, response, body) {
+        credential1request.post({url: url + '/message/' + tracker1.serial, json: update }, function (error, response, body) {
             assert.equal(200, response.statusCode);
-            request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
+            credential1request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
                 assert.equal(response.statusCode, 200);
 
                 assert.equal(body.location.latitude, 52.710074934026935);
@@ -187,9 +194,9 @@ describe('test message endpoint', function () {
             }
         };
 
-        request.post({url: url + '/message/' + tracker1.serial, json: update }, function (error, response, body) {
+        credential1request.post({url: url + '/message/' + tracker1.serial, json: update }, function (error, response, body) {
             assert.equal(200, response.statusCode);
-            request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
+            credential1request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
                 assert.equal(response.statusCode, 200);
 
                 assert.equal(body.location.latitude, 52.710074934026935);
@@ -211,7 +218,7 @@ describe('test message endpoint', function () {
             update_by_serial_started: false
         };
 
-        request.get({url: url + '/message/notify/528538f0d8d584853c000002', json:true}, function (error, response, body) {
+        credential1request.get({url: url + '/message/notify/528538f0d8d584853c000002', json:true}, function (error, response, body) {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
@@ -221,7 +228,7 @@ describe('test message endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial_started = true;
-            request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
+            credential1request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -239,7 +246,7 @@ describe('test message endpoint', function () {
             update_by_serial_started: false
         };
 
-        request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
+        credential1request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
@@ -249,7 +256,7 @@ describe('test message endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial_started = true;
-            request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
+            credential1request.post({url: url + '/message/' + tracker1.serial, json: messageUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -267,7 +274,7 @@ describe('test message endpoint', function () {
             update_by_serial_started: false
         };
 
-        request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
+        credential1request.get({url: url + '/message/notify', json:true}, function (error, response, body) {
             complete.notify_changed = true;
             assert(complete.update_by_serial_started);
             assert.equal(200, response.statusCode);
@@ -277,7 +284,7 @@ describe('test message endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial_started = true;
-            request.post({url: url + '/message/' + tracker2.serial, json: messageUpdate1 }, function (error, response, body) {
+            credential1request.post({url: url + '/message/' + tracker2.serial, json: messageUpdate1 }, function (error, response, body) {
                 complete.update_by_serial = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -297,17 +304,19 @@ describe('test message endpoint', function () {
             update_by_serial2_started: false
         };
 
-        request.get({url: url + '/message/notify/528538f0d8d584853c000002', json:true}, function (error, response, body) {
+        credential1request.get({url: url + '/message/notify/528538f0d8d584853c000002', json:true}, function (error, response, body) {
+            console.log('notify1');
             complete.notify_changed1 = true;
             assert(complete.update_by_serial1_started);
             assert(complete.update_by_serial2_started);
-            assert( complete.notify_changed2);
+            assert(complete.notify_changed2);
             assert.equal(200, response.statusCode);
             assert.equal(52.710074934026935, body.lastMessage.location.latitude);
             handleComplete(complete, done);
         });
 
-        request2.get({url: url + '/message/notify/528538f0d8d584853c000004', json:true}, function (error, response, body) {
+        credential2request.get({url: url + '/message/notify/528538f0d8d584853c000004', json:true}, function (error, response, body) {
+            console.log('notify2');
             complete.notify_changed2 = true;
             assert(complete.update_by_serial1_started);
             assert(!complete.update_by_serial2_started);
@@ -320,7 +329,7 @@ describe('test message endpoint', function () {
 
         setTimeout(function() {
             complete.update_by_serial1_started = true;
-            request2.post({url: url + '/message/' + tracker3.serial, json: messageUpdate2 }, function (error, response, body) {
+            request.post({url: url + '/message/' + tracker3.serial, json: messageUpdate2 }, function (error, response, body) {
                 complete.update_by_serial1 = true;
                 assert.equal(200, response.statusCode);
                 handleComplete(complete, done);
@@ -339,7 +348,7 @@ describe('test message endpoint', function () {
 
 
     it('server should ignore updates with uknown serials', function (done) {
-        request.post({url: url + '/message/234234234234234234', json: messageUpdate1 }, function (error, response, body) {
+        credential1request.post({url: url + '/message/234234234234234234', json: messageUpdate1 }, function (error, response, body) {
 
             assert.equal(404, response.statusCode);
             done();

@@ -3,6 +3,8 @@ var config = require('../lib/config.js');
 var util = require('../lib/util.js');
 var async = require('async');
 var tripBuilder = require('../lib/trip-builder');
+var authenticationMiddleware = require('../lib/authentication-middleware.js');
+var ObjectID = require('mongodb').ObjectID;
 
 var DEFAULT_TRIP_DURATION = 6 * 60 * 60 * 1000;
 
@@ -141,14 +143,14 @@ var rollOverTripIfRequired = function(trackerDoc, timestampNow, callback) {
 };
 
 var handleIdChanged = function(doc) {
-    var obj = outstandingRequests[doc._id];
-    if (obj &&  obj.userId.equals(doc.userId)) {
-        obj.res.json(doc);
+    var oustandingRequest = outstandingRequests[doc._id];
+    if (oustandingRequest &&  oustandingRequest.userId.equals(doc.userId)) {
+        oustandingRequest.res.json(doc);
 
         // remove all keys from outstandingRequests that point to obj
         for(var key in outstandingRequests){
             request = outstandingRequests[key];
-            if (request === obj) {
+            if (request === oustandingRequest) {
                 delete outstandingRequests[key];
             }
         }
@@ -228,21 +230,17 @@ module.exports =
             }
         },
         notify: {
-            use: function (req, res, next) {
-                if (req.isAuthenticated()) {
-                    next();
-                } else {
-                    res.json(401, {message: 'not logged in'});
-                }
-            },
+            use: authenticationMiddleware.middlewareFunction,
             ":id": {
                 get: function (req, res) {
-                    addRequest(req.params.id, createRequest(req, res, req.user._id));
+                    var userId = new ObjectID(req.user._id);
+                    addRequest(req.params.id, createRequest(req, res, userId));
                 }
             },
             get: function (req, res) {
-                var query = { userId: req.user._id };
-                var request = createRequest(req, res, req.user._id);
+                var userId = new ObjectID(req.user._id);
+                var query = { userId: userId };
+                var request = createRequest(req, res, userId);
                 findObjects(query, function(err, objects) {
                     for (var i = 0; i < objects.length; i++) {
                         addRequest(objects[i]._id, request);

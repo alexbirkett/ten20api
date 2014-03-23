@@ -2,7 +2,7 @@ module.exports = function(collection, port) {
 
     var should = require('should');
     var requestApi = require('request');
-    var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
+    var request = requestApi.defaults({followRedirect: false});
     var server = require('../../server');
     var assert = require('assert');
     var async = require('async');
@@ -86,20 +86,28 @@ module.exports = function(collection, port) {
             auth.signUp(credential1, done);
         });
 
-        it('setup: signin with credential1', function (done) {
-            auth.signIn(credential1, done);
-        });
-
-        var credential1Info;
-        it('setup: get user info for later', function (done) {
-            auth.getUserInfo(function(error, response, info){
-                credential1Info = info;
+        var credential1request;
+        it('setup: authenticate with credential1', function (done) {
+            auth.authenticate(credential1, function(err, request) {
+                assert.ifError(err);
+                credential1request = request;
                 done();
             });
         });
 
+        var credential1Info;
+        it('setup: get user info for later', function (done) {
+
+            credential1request.get({url: url + '/user/info', json: true}, function (err, response, body) {
+                assert.ifError(err);
+                credential1Info = body;
+                done();
+            });
+
+        });
+
         it('should respond to GET with empty array', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential1request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 assert.equal(0, jsonBody.items.length);
@@ -108,7 +116,7 @@ module.exports = function(collection, port) {
         });
 
         it('should store object in response to POST', function (done) {
-            request.post({url: collectionUrl, json: objectArray[0] }, function (error, response, body) {
+            credential1request.post({url: collectionUrl, json: objectArray[0] }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
@@ -117,7 +125,7 @@ module.exports = function(collection, port) {
         var previouslyStoreObjectId;
 
         it('should respond to GET with previously posted object', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential1request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
 
                 var jsonBody = JSON.parse(body);
@@ -132,7 +140,7 @@ module.exports = function(collection, port) {
 
         it('should respond to GET for specific object id', function (done) {
             var url = collectionUrl + '/' + previouslyStoreObjectId;
-            request.get({url: url}, function (error, response, body) {
+            credential1request.get({url: url}, function (error, response, body) {
                 assert.equal(200, response.statusCode);
 
                 var jsonBody = JSON.parse(body);
@@ -145,14 +153,14 @@ module.exports = function(collection, port) {
         });
 
         it('should replace collection of objects in response to PUT', function (done) {
-            request.put({url: collectionUrl, json: objectArray }, function (error, response, body) {
+            credential1request.put({url: collectionUrl, json: objectArray }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET with previously PUT collection of objects', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential1request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
 
                 var jsonBody = JSON.parse(body);
@@ -166,14 +174,14 @@ module.exports = function(collection, port) {
         });
 
         it('should respond to GET for specific object id with 404', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
+            credential1request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(404, response.statusCode);
                 done();
             });
         });
 
         it('should store specific object ID in response to PUT', function (done) {
-            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: { "name": "Xiaolei", "country": "China" } }, function (error, response, body) {
+            credential1request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: { "name": "Xiaolei", "country": "China" } }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
@@ -181,7 +189,7 @@ module.exports = function(collection, port) {
 
 
         it('should respond to GET for specific object id with correct document', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004', json:true }, function (error, response, body) {
+            credential1request.get({url: collectionUrl + '/526fb0b3970998723e000004', json:true }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 assert.equal('Xiaolei', body.name);
                 assert.equal('China', body.country);
@@ -190,14 +198,14 @@ module.exports = function(collection, port) {
         });
 
         it('should replace specific document in response to PUT', function (done) {
-            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: { name: 'Alex'} }, function (error, response, body) {
+            credential1request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: { name: 'Alex'} }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET for specific object id with correct document with previously updated content', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004', json: true }, function (error, response, body) {
+            credential1request.get({url: collectionUrl + '/526fb0b3970998723e000004', json: true }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 console.log(body);
                 assert.equal('Alex', body.name);
@@ -207,14 +215,14 @@ module.exports = function(collection, port) {
         });
 
         it('should patch specific document in response to PATCH', function (done) {
-            request.patch({url: collectionUrl + '/526fb0b3970998723e000004', json: { country: 'UK'} }, function (error, response, body) {
+            credential1request.patch({url: collectionUrl + '/526fb0b3970998723e000004', json: { country: 'UK'} }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET for specific object id with correct document with previously patched content', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004', json: true}, function (error, response, body) {
+            credential1request.get({url: collectionUrl + '/526fb0b3970998723e000004', json: true}, function (error, response, body) {
                 console.log(body);
                 assert.equal(200, response.statusCode);
                 assert.equal('Alex',body.name);
@@ -223,9 +231,6 @@ module.exports = function(collection, port) {
             });
         });
 
-        it('setup logout', function (done) {
-            auth.signOut(done);
-        });
 
         it('should respond to GET with unauthorized after logout', function (done) {
             request.get(collectionUrl, function (error, response, body) {
@@ -273,12 +278,18 @@ module.exports = function(collection, port) {
             auth.signUp(credential2, done);
         });
 
-        it('setup: signin with credential2', function (done) {
-            auth.signIn(credential2, done);
+        var credential2request;
+        it('setup: authenticate with credential2', function (done) {
+            auth.authenticate(credential2, function(err, request) {
+                assert.ifError(err);
+                credential2request = request;
+                done();
+            });
         });
 
+
         it('should respond to GET with zero objects (after switching accounts)', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential2request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 jsonBody.items.should.have.lengthOf(0);
@@ -289,7 +300,7 @@ module.exports = function(collection, port) {
         //credential1Info
 
         it('should not be possible to get trackers owned by other user', function (done) {
-            request.get(collectionUrl + '?user=' + credential1Info._id, function (error, response, body) {
+            credential2request.get(collectionUrl + '?user=' + credential1Info._id, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 jsonBody.items.should.have.lengthOf(0);
@@ -298,50 +309,43 @@ module.exports = function(collection, port) {
         });
 
         it('should respond to GET requesting object created by other account with unauthorized', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
+            credential2request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(401, response.statusCode);
                 done();
             });
         });
 
         it('should respond to PUT updating object created by other account with unauthorized', function (done) {
-            request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[1] }, function (error, response, body) {
+            credential2request.put({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[1] }, function (error, response, body) {
                 assert.equal(401, response.statusCode);
                 done();
             });
         });
 
         it('should respond to PATCH updating object created by other account with unauthorized', function (done) {
-            request.patch({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[1] }, function (error, response, body) {
+            credential2request.patch({url: collectionUrl + '/526fb0b3970998723e000004', json: objectArray[1] }, function (error, response, body) {
                 assert.equal(401, response.statusCode);
                 done();
             });
         });
 
         it('should respond to DELETE object created by other account with unauthorized', function (done) {
-            request.del({url: collectionUrl + '/526fb0b3970998723e000004'}, function (error, response, body) {
+            credential2request.del({url: collectionUrl + '/526fb0b3970998723e000004'}, function (error, response, body) {
                 assert.equal(401, response.statusCode);
                 done();
             });
         });
 
         it('POST should add object', function (done) {
-            request.post({url: collectionUrl, json: objectArray[1] }, function (error, response, body) {
+            credential2request.post({url: collectionUrl, json: objectArray[1] }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
-        it('setup logout', function (done) {
-            auth.signOut(done);
-        });
-
-        it('setup: signin with credential1', function (done) {
-            auth.signIn(credential1, done);
-        });
 
         it('should respond to GET for specific object id with correct document (survive delete attempts when logged out or by other account)', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
+            credential1request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 assert.equal('Alex', JSON.parse(body).name);
                 done();
@@ -349,7 +353,7 @@ module.exports = function(collection, port) {
         });
 
         it('should respond to GET with 4 objects', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential1request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 assert.equal(4, jsonBody.items.length);
@@ -358,21 +362,21 @@ module.exports = function(collection, port) {
         });
 
         it('should respond to DELETE object by removing object from database', function (done) {
-            request.del({url: collectionUrl + '/526fb0b3970998723e000004'}, function (error, response, body) {
+            credential1request.del({url: collectionUrl + '/526fb0b3970998723e000004'}, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET for specific object id with not found', function (done) {
-            request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
+            credential1request.get({url: collectionUrl + '/526fb0b3970998723e000004' }, function (error, response, body) {
                 assert.equal(404, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET with 3 objects', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential1request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 assert.equal(3, jsonBody.items.length);
@@ -381,14 +385,14 @@ module.exports = function(collection, port) {
         });
 
         it('should respond to DELETE object removing entire object collection', function (done) {
-            request.del({url: collectionUrl }, function (error, response, body) {
+            credential1request.del({url: collectionUrl }, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 done();
             });
         });
 
         it('should respond to GET with 0 objects', function (done) {
-            request.get(collectionUrl, function (error, response, body) {
+            credential1request.get(collectionUrl, function (error, response, body) {
                 assert.equal(200, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 assert.equal(0, jsonBody.items.length);

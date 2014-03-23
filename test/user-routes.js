@@ -75,12 +75,11 @@ describe('user routes', function () {
         });
     });
 
-
-
-    it('should not signin with invalid credentials', function (done) {
-        request.post({url: url + '/signin', json: invalidCredential}, function (error, response, body) {
+    it('should not authenticate with invalid credentials', function (done) {
+        request.post({url: url + '/authenticate', json: invalidCredential}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(401, response.statusCode);
+
             response.body.should.have.property('message');
             response.body.message.should.equal('Invalid password');
             done();
@@ -97,38 +96,34 @@ describe('user routes', function () {
 
     });
 
-    it('should signin with valid credentials', function (done) {
-        request.post({url: url + '/signin', json: credential}, function (error, response, body) {
+    var headers;
+
+    it('should authenticate with valid credentials', function (done) {
+        request.post({url: url + '/authenticate', json: credential}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(200, response.statusCode);
-            response.body.should.have.property('message');
-            response.body.message.should.equal('');
+
+            response.body.should.have.property('token');
+            headers = {
+                'Authorization': 'Bearer ' + body.token
+            };
+
             done();
         });
 
     });
 
     it('should access info endpoint', function (done) {
-        request.get(url + '/user/info', function (error, response, body) {
+        request.get({url: url + '/user/info', headers: headers, json:true}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(200, response.statusCode);
-            var body = JSON.parse(response.body);
-            body.should.have.property('email');
+            //body.should.have.property('email');
             body.should.have.property('_id');
             done();
         });
     });
 
-    it('should logout', function (done) {
-        request.get(url + '/signout', function (error, response, body) {
-            assert.ifError(error);
-            response.should.have.property('statusCode', 302);
-            response.headers.should.have.property('location', '/');
-            done();
-        });
-    });
-
-    it('should still not be possible to access info endpoint after sign out', function (done) {
+    it('should not be possible to access info endpoint without token', function (done) {
         request.get(url + '/user/info', function (error, response, body) {
             assert.ifError(error);
             assert.equal(401, response.statusCode);

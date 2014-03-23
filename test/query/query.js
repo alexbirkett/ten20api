@@ -5,7 +5,7 @@ var collectionApi = require('../../lib/collection-api');
 var databaseUtils = require('../../lib/database-utils');
 var should = require('should');
 var requestApi = require('request');
-var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
+var request;
 var server = require('../../server');
 var assert = require('assert');
 var async = require('async');
@@ -14,7 +14,7 @@ var dropDatabase = require('../../lib/drop-database');
 var port = 3007;
 
 var url = 'http://localhost:' + port;
-var auth = require('./../helper/auth')(url, request);
+var auth = require('./../helper/auth')(url, requestApi.defaults({followRedirect: false}));
 
 
 var getCollectionRoute = function (collection, indexes, callback) {
@@ -77,16 +77,18 @@ var collectionUrl = url + '/' + collection;
 
 describe('test query', function () {
 
-
     before(function (done) {
-        async.series([function (callback) {
+        async.waterfall([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
             server.startServer(port, dbUrl, configRoutes, callback);
         },function (callback) {
-            auth.signUp(credential1, callback);
-        },function (callback) {
-            auth.signIn(credential1, callback);
+            auth.signUp(credential1 , callback);
+        },function (response, body, callback) {
+            auth.authenticate(credential1, callback);
+        }, function(prequest, callback) {
+            request = prequest;
+            callback();
         }], done);
     });
 

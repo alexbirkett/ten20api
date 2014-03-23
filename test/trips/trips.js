@@ -1,7 +1,8 @@
 var async = require('async');
 var user = require('../../routes/user');
 var requestApi = require('request');
-var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
+var unauthenticatedRequest = requestApi.defaults({followRedirect: false});
+var request;
 var server = require('../../server');
 var assert = require('assert');
 var dropDatabase = require('../../lib/drop-database');
@@ -21,7 +22,7 @@ var time = +new Date('Tue Sep 05 1978 10:00:00 GMT');
 var port = 3013;
 
 var url = 'http://localhost:' + port;
-var auth = require('./../helper/auth')(url, request);
+var auth = require('./../helper/auth')(url, unauthenticatedRequest);
 
 var dbUrl = 'mongodb://localhost/testTrips2';
 
@@ -47,33 +48,30 @@ describe('test trips', function () {
 
 
     before(function (done) {
-        async.series([function (callback) {
+        async.waterfall([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
             server.startServer(port, dbUrl, configRoute, callback);
         },function (callback) {
             auth.signUp(credential, callback);
-        },function (callback) {
-            auth.signIn(credential, callback);
+        },function (response, body, callback) {
+            auth.authenticate(credential, callback);
+        }, function(prequest, callback) {
+            request = prequest;
             currentTimeMillis = util.currentTimeMillis;
             util.currentTimeMillis = function() {
                 var currentTime = time;
                 time += ONE_MINUTE;
                 return currentTime;
             };
-
+            callback();
         }], done);
     });
 
     after(function (done) {
-        async.series([function (callback) {
-            auth.signOut(callback);
-        }, function (callback) {
-            ///server.close(callback);
-            util.currentTimeMillis = currentTimeMillis;
-            callback();
-        }], done);
-
+        ///server.close(callback);
+        util.currentTimeMillis = currentTimeMillis;
+        done();
     });
 
     it('should be possible to add a tracker with no tripDuration', function (done) {

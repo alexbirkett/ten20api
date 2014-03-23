@@ -1,7 +1,7 @@
 var async = require('async');
 var user = require('../../routes/user');
 var requestApi = require('request');
-var request = requestApi.defaults({followRedirect: false, jar: requestApi.jar()});
+var request = requestApi.defaults({followRedirect: false});
 var server = require('../../server');
 var assert = require('assert');
 var dropDatabase = require('../../lib/drop-database');

@@ -2,20 +2,27 @@ var scrypt = require("scrypt");
 var passport = require('passport');
 var db = require('../lib/db.js');
 var maxtime = 0.1;
-
-var getUserCollection = function() {
+var jwt = require('jsonwebtoken');
+var authenticationMiddleware = require('../lib/authentication-middleware');
+var async = require('async');
+var getUserCollection = function () {
     return db.getDb().collection('user');
 };
+
+var secret = 'shhhhhhared-secret';
+
 
 module.exports = {
 
     user: {
         info: {
             get: function (req, res) {
+                console.log(req.user);
                 res.json(req.user);
             }
         },
-        use: function(req, res, next) {
+        use: authenticationMiddleware.middlewareFunction,
+        useOld: function (req, res, next) {
             if (req.isAuthenticated()) {
                 next();
             } else {
@@ -46,6 +53,33 @@ module.exports = {
                     res.json({message: ''});
                 });
             })(req, res, next);
+        }
+    },
+    authenticate: {
+        post: function (req, res) {
+            console.log(req.headers);
+            var userInfo = req.body;
+
+            var profile = {};
+
+            console.log(userInfo);
+            async.waterfall([function (callback) {
+                getUserCollection().findOne({ email: userInfo.email}, callback);
+            }, function (user, callback) {
+                scrypt.verifyHash(user.hash, userInfo.password, callback);
+                profile._id = user._id;
+            }, function (isMatch, callback) {
+                callback(isMatch ? undefined : 'invalid password');
+            }],
+                function (err) {
+                    if (err) {
+                        res.json(401, { message: 'Invalid password' });
+                    } else {
+                        var token = jwt.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: 60 * 5 });
+                        res.json({ token: token });
+                    }
+                });
+
         }
     },
     signout: {
