@@ -43,9 +43,22 @@ describe('test password reset endpoint', function () {
         password: 'wrongpassword'
     };
 
+    var invalidCredential = {
+        email: 'wrongusername',
+        password: 'wrongpassword'
+    };
+
     it('should be possible to sign up', function (done) {
         request.post({url: url + '/signup', json: credential}, function (error, response, body) {
             assert.equal(response.statusCode, 200);
+            done();
+        });
+    });
+
+    it('should not be possible to authenticate with invalid password', function (done) {
+
+        request.post({url: url + '/authenticate', json: invalidCredential}, function (error, response, body) {
+            assert.equal(response.statusCode, 401);
             done();
         });
     });

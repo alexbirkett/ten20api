@@ -13,7 +13,6 @@ module.exports = {
     user: {
         info: {
             get: function (req, res) {
-                console.log(req.user);
                 res.json(req.user);
             }
         },
@@ -21,14 +20,18 @@ module.exports = {
     },
     authenticate: {
         post: function (req, res) {
-            console.log(req.headers);
             var userInfo = req.body;
 
             var profile = {};
 
             console.log(userInfo);
             async.waterfall([function (callback) {
-                getUserCollection().findOne({ email: userInfo.email}, callback);
+                getUserCollection().findOne({ email: userInfo.email}, function(err, user) {
+                    if (!user) {
+                        err = "user not found";
+                    }
+                    callback(err, user);
+                });
             }, function (user, callback) {
                 scrypt.verifyHash(user.hash, userInfo.password, callback);
                 profile._id = user._id;
