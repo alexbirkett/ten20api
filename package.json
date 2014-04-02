@@ -9,7 +9,7 @@
     "mongodb": "1.3.23",
     "express": "3.4.8",
     "scrypt": "3.0.1",
-    "express-dry-router": "0.1.1",
+    "express-dry-router": "0.1.2",
     "async": "0.2.10",
     "optimist": "0.6.0",
     "express-jwt": "0.2.0",

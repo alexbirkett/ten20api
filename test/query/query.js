@@ -124,11 +124,34 @@ describe('test query', function () {
     });
 
 
+    it('should respond to GET query for firstname=Ben with no records', function (done) {
+        request.get({url: collectionUrl + '?firstName=Ben', json:true}, function (error, response, body) {
+            assert.equal(404, response.statusCode);
+            assert.equal(0, body.items.length);
+            done();
+        });
+    });
+
+    it('should respond to HEAD query for firstname=Ben with 404', function (done) {
+        request.head({url: collectionUrl + '?firstName=Ben', json:true}, function (error, response, body) {
+            assert.equal(404, response.statusCode);
+            done();
+        });
+    });
+
+
     it('should respond to query for firstname=Alex with Alex\'s record', function (done) {
         request.get(collectionUrl + '?firstName=Alex', function (error, response, body) {
             assert.equal(200, response.statusCode);
             var jsonObject = JSON.parse(body);
             assert.equal(1, jsonObject.items.length);
+            done();
+        });
+    });
+
+    it('should respond to HEAD query for firstname=Alex with 200', function (done) {
+        request.head({url: collectionUrl + '?firstName=Alex', json:true}, function (error, response, body) {
+            assert.equal(200, response.statusCode);
             done();
         });
     });
@@ -254,7 +277,7 @@ describe('test query', function () {
         request.del(collectionUrl, function (error, response, body) {
             assert.equal(200, response.statusCode);
             request.get({url:collectionUrl, json: true}, function (error, response, body) {
-                assert.equal(200, response.statusCode);
+                assert.equal(404, response.statusCode);
                 assert.equal(0, body.items.length);
                 done();
             });
@@ -385,7 +408,7 @@ describe('test query', function () {
         request.del(collectionUrl, function (error, response, body) {
             assert.equal(200, response.statusCode);
             request.get({url:collectionUrl, json: true}, function (error, response, body) {
-                assert.equal(200, response.statusCode);
+                assert.equal(404, response.statusCode);
                 assert.equal(0, body.items.length);
                 done();
             });
