@@ -108,7 +108,7 @@ module.exports = function(collection, port) {
 
         it('should respond to GET with empty array', function (done) {
             credential1request.get(collectionUrl, function (error, response, body) {
-                assert.equal(200, response.statusCode);
+                assert.equal(404, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 assert.equal(0, jsonBody.items.length);
                 done();
@@ -290,7 +290,7 @@ module.exports = function(collection, port) {
 
         it('should respond to GET with zero objects (after switching accounts)', function (done) {
             credential2request.get(collectionUrl, function (error, response, body) {
-                assert.equal(200, response.statusCode);
+                assert.equal(404, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 jsonBody.items.should.have.lengthOf(0);
                 done();
@@ -301,7 +301,7 @@ module.exports = function(collection, port) {
 
         it('should not be possible to get trackers owned by other user', function (done) {
             credential2request.get(collectionUrl + '?user=' + credential1Info._id, function (error, response, body) {
-                assert.equal(200, response.statusCode);
+                assert.equal(404, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 jsonBody.items.should.have.lengthOf(0);
                 done();
@@ -393,7 +393,7 @@ module.exports = function(collection, port) {
 
         it('should respond to GET with 0 objects', function (done) {
             credential1request.get(collectionUrl, function (error, response, body) {
-                assert.equal(200, response.statusCode);
+                assert.equal(404, response.statusCode);
                 var jsonBody = JSON.parse(body);
                 assert.equal(0, jsonBody.items.length);
                 done();
