@@ -15,13 +15,6 @@ var auth = require('./../helper/auth')(url, request);
 
 var dbUrl = 'mongodb://localhost/testPasswordReset';
 
-var credential = {
-    email: 'test@ten20.com',
-    password: 'password',
-    username: 'tester'
-};
-
-
 describe('test password reset endpoint', function () {
 
     before(function (done) {
@@ -35,7 +28,8 @@ describe('test password reset endpoint', function () {
 
     var credential = {
         email: 'test@ten20.com',
-        password: 'password'
+        password: 'password',
+        username: 'tester'
     };
 
     var invalidCredential = {
@@ -43,9 +37,8 @@ describe('test password reset endpoint', function () {
         password: 'wrongpassword'
     };
 
-    var invalidCredential = {
-        email: 'wrongusername',
-        password: 'wrongpassword'
+    var noPasswordCredential = {
+        email: 'test@ten20.com'
     };
 
     it('should be possible to sign up', function (done) {
@@ -56,8 +49,14 @@ describe('test password reset endpoint', function () {
     });
 
     it('should not be possible to authenticate with invalid password', function (done) {
-
         request.post({url: url + '/authenticate', json: invalidCredential}, function (error, response, body) {
+            assert.equal(response.statusCode, 401);
+            done();
+        });
+    });
+
+    it('should not be possible to authenticate with no password', function (done) {
+        request.post({url: url + '/authenticate', json: noPasswordCredential}, function (error, response, body) {
             assert.equal(response.statusCode, 401);
             done();
         });
@@ -78,8 +77,6 @@ describe('test password reset endpoint', function () {
         request.post({url: url + '/authenticate', json: credential}, function (error, response, body) {
             assert.equal(response.statusCode, 200);
             token = body.token;
-
-            console.log(token);
             done();
         });
     });

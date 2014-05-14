@@ -1,6 +1,6 @@
 var scrypt = require("scrypt");
 var db = require('../lib/db.js');
-var maxtime = 0.1;
+var MAX_TIME = 0.1;
 var jwt = require('jsonwebtoken');
 var authenticationMiddleware = require('../lib/authentication-middleware');
 var async = require('async');
@@ -23,60 +23,74 @@ module.exports = {
             var userInfo = req.body;
 
             var profile = {};
-
-            console.log(userInfo);
-            async.waterfall([function (callback) {
-                getUserCollection().findOne({ email: userInfo.email}, function(err, user) {
-                    if (!user) {
-                        err = "user not found";
-                    }
-                    callback(err, user);
-                });
-            }, function (user, callback) {
-                scrypt.verifyHash(user.hash, userInfo.password, callback);
-                profile._id = user._id;
-            }, function (isMatch, callback) {
-                callback(isMatch ? undefined : 'invalid password');
-            }],
-                function (err) {
-                    if (err) {
-                        res.json(401, { message: 'Invalid password' });
+            async.waterfall([
+                function (callback) {
+                    if (!userInfo.password) {
+                        callback('no password specified');
                     } else {
-                        var token = jwt.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: 60 * 5 });
-                        res.json({ token: token });
+                        callback();
                     }
-                });
+                },
+                function (callback) {
+                    getUserCollection().findOne({ email: userInfo.email}, function (err, user) {
+                        if (!user) {
+                            err = "user not found";
+                        }
+                        callback(err, user);
+                    });
+                }, function (user, callback) {
+                    scrypt.verifyHash(user.hash, userInfo.password, callback);
+                    profile._id = user._id;
+                }, function (isMatch, callback) {
+                    callback(isMatch ? undefined : 'invalid password');
+                }], function (err) {
+                if (err) {
+                    res.setHeader('WWW-Authenticate', 'Basic realm="ten20"');
+                    res.json(401, { message: 'Invalid password' });
+                } else {
+                    var token = jwt.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: 60 * 5 });
+                    res.json({ token: token });
+                }
+            });
 
         }
     },
     signup: {
         post: function (req, res) {
-            var userInfo = req.body;
-
-            getUserCollection().findOne({email: userInfo.email}, function (error, user) {
-                if (!error) {
-                    if (!user) {
-                        scrypt.passwordHash(userInfo.password, maxtime, function (err, pwdhash) {
-                            if (!err) {
-                                //pwdhash should now be stored in the database
-                                userInfo.hash = pwdhash;
-                                delete userInfo.password;
-                                delete userInfo['re-password'];
-                                delete userInfo.rememberMe;
-                                getUserCollection().insert(userInfo, function (error, docs) {
-                                    res.json({});
-                                });
-                            } else {
-                                res.json(500, {message: 'server interal error!'});
-                            }
-                        });
-                        // already exist username
+            var requestParams = req.body;
+            async.waterfall([
+                function (callback) {
+                    if (!requestParams.password) {
+                        callback('no password specified');
                     } else {
-                        res.json(403, {message: 'username already exists!'});
+                        callback();
                     }
-                } else {
-                    res.json(500, {message: 'server interal error!'});
-                }
+                },
+                function (callback) {
+                    getUserCollection().findOne({ email: requestParams.email }, function(err, user) {
+                        if (user) {
+                            err = "user already exists";
+                        }
+                        callback(err, user);
+                    });
+                },
+                function (user, callback) {
+                    scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
+                },
+                function (pwdhash, callback) {
+                    var userObject = {
+                        email: requestParams.email,
+                        username: requestParams.username,
+                        hash: pwdhash
+                    };
+                    getUserCollection().insert(userObject, callback);
+                }],
+                function (err) {
+                    if (err) {
+                        res.json(403, {message: 'user already exists!'});
+                    } else {
+                        res.json({});
+                    }
             });
         }
     }
