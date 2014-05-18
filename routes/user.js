@@ -66,14 +66,14 @@ module.exports = {
                     }
                 },
                 function (callback) {
-                    getUserCollection().findOne({ email: requestParams.email }, function(err, user) {
-                        if (user) {
+                    getUserCollection().count({$or: [{ username: requestParams.username }, { email: requestParams.email }]}, function(err, count) {
+                        if (count !== 0) {
                             err = "user already exists";
                         }
-                        callback(err, user);
+                        callback(err);
                     });
                 },
-                function (user, callback) {
+                function (callback) {
                     scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
                 },
                 function (pwdhash, callback) {

@@ -6,11 +6,17 @@ module.exports = function (url, request) {
     return {
         signUp: function (credential, callback) {
             request.post({url: url + '/signup', json: credential}, function (error, response, body) {
+                if (response.statusCode !== 200) {
+                    error = 'non 200 status code';
+                }
                 callback(error, response, body);
             });
         },
         signIn: function (credential, callback) {
             request.post({url: url + '/signin', json: credential}, function (error, response, body) {
+                if (response.statusCode !== 200) {
+                    error = 'non 200 status code';
+                }
                 callback(error, response, body);
             });
         },
@@ -27,7 +33,7 @@ module.exports = function (url, request) {
                     }});
                     callback(undefined, request);
                 } else {
-                    callback(err);
+                    callback(error);
                 }
             });
         },

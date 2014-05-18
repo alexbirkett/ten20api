@@ -23,11 +23,13 @@ var dbUrl = 'mongodb://localhost/testLocation';
 
 var credential1 = {
     email: 'test@ten20.com',
+    username: 'username1',
     password: 'passwordone'
 };
 
 var credential2 = {
     email: 'test2@ten20.com',
+    username: 'username2',
     password: 'passwordtwo'
 };
 
