@@ -45,7 +45,6 @@ module.exports = {
                     callback(isMatch ? undefined : 'invalid password');
                 }], function (err) {
                 if (err) {
-                    res.setHeader('WWW-Authenticate', 'Basic realm="ten20"');
                     res.json(401, { message: 'Invalid password' });
                 } else {
                     var token = jwt.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: 60 * 5 });
