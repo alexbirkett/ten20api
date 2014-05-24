@@ -70,17 +70,29 @@ describe('test password reset endpoint', function () {
         });
     });
 
-
     var token;
-    it('should  be possible to authenticate with valid username and password', function (done) {
-
-        request.post({url: url + '/authenticate', json: credential}, function (error, response, body) {
+    it('should  be possible to authenticate with valid email and password', function (done) {
+        request.post({url: url + '/authenticate', json: {
+            email: 'test@ten20.com',
+            password: 'password'
+        }}, function (error, response, body) {
             assert.equal(response.statusCode, 200);
             token = body.token;
             done();
         });
     });
 
+    var token;
+    it('should  be possible to authenticate with valid username and password', function (done) {
+        request.post({url: url + '/authenticate', json: {
+            email: 'tester',
+            password: 'password'
+        }}, function (error, response, body) {
+            assert.equal(response.statusCode, 200);
+            token = body.token;
+            done();
+        });
+    });
 
     it('should not be possible to get user info without a token', function (done) {
 

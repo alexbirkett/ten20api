@@ -27,26 +27,26 @@ module.exports = {
     },
     authenticate: {
         post: function (req, res) {
-            var userInfo = req.body;
+            var requestParams = req.body;
 
             var profile = {};
             async.waterfall([
                 function (callback) {
-                    if (!userInfo.password) {
+                    if (!requestParams.password) {
                         callback('no password specified');
                     } else {
                         callback();
                     }
                 },
                 function (callback) {
-                    getUserCollection().findOne({ email: userInfo.email}, function (err, user) {
+                    getUserCollection().findOne({$or: [{ username: requestParams.email }, { email: requestParams.email }]}, function (err, user) {
                         if (!user) {
                             err = "user not found";
                         }
                         callback(err, user);
                     });
                 }, function (user, callback) {
-                    scrypt.verifyHash(user.hash, userInfo.password, callback);
+                    scrypt.verifyHash(user.hash, requestParams.password, callback);
                     profile._id = user._id;
                 }, function (isMatch, callback) {
                     callback(isMatch ? undefined : 'invalid password');
