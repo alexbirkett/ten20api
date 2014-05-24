@@ -8,6 +8,13 @@ var getUserCollection = function () {
     return db.getDb().collection('user');
 };
 
+var NO_PASSWORD_SPECIFIED = 'no password specified';
+var NO_USERNAME_SPECIFIED = 'no username specified';
+var USER_ALREADY_EXISTS = 'user already exists';
+var PASSWORD_TOO_SHORT = 'password too short';
+var INVALID_EMAIL_ADDRESS = 'invalid email address';
+var INVALID_USERNAME = 'invalid user name';
+
 module.exports = {
 
     user: {
@@ -60,7 +67,15 @@ module.exports = {
             async.waterfall([
                 function (callback) {
                     if (!requestParams.password) {
-                        callback('no password specified');
+                        callback(NO_PASSWORD_SPECIFIED);
+                    } else if (requestParams.password.length < 8) {
+                        callback(PASSWORD_TOO_SHORT);
+                    } else if (!requestParams.username || requestParams.username.length < 1) {
+                        callback(NO_USERNAME_SPECIFIED);
+                    } else if (requestParams.username.indexOf('@') > -1) {
+                        callback(INVALID_USERNAME);
+                    } else if (requestParams.email && (requestParams.email.indexOf('@') < 0 || requestParams.email.length < 3)) {
+                        callback(INVALID_EMAIL_ADDRESS);
                     } else {
                         callback();
                     }
@@ -68,7 +83,7 @@ module.exports = {
                 function (callback) {
                     getUserCollection().count({$or: [{ username: requestParams.username }, { email: requestParams.email }]}, function(err, count) {
                         if (count !== 0) {
-                            err = "user already exists";
+                            err = USER_ALREADY_EXISTS;
                         }
                         callback(err);
                     });
@@ -85,10 +100,23 @@ module.exports = {
                     getUserCollection().insert(userObject, callback);
                 }],
                 function (err) {
-                    if (err) {
-                        res.json(403, {message: 'user already exists!'});
+                    console.log(err);
+                    if (!err) {
+                        res.json({ message: 'account created'});
+                    } else if (err === USER_ALREADY_EXISTS) {
+                        res.json(403, { message: 'user already exists!'});
+                    } else if (err === NO_PASSWORD_SPECIFIED) {
+                        res.json(400, { message: 'no password specified'});
+                    } else if (err === NO_USERNAME_SPECIFIED) {
+                        res.json(400, { message: 'no username specified'});
+                    } else if (err === PASSWORD_TOO_SHORT) {
+                        res.json(400, { message: 'password must be 8 characters or longer'});
+                    } else if (err === INVALID_EMAIL_ADDRESS) {
+                        res.json(400, { message: 'invalid email address'});
+                    } else if (err === INVALID_USERNAME) {
+                        res.json(400, { message: 'invalid username'});
                     } else {
-                        res.json({});
+                        res.json(500, { message: 'general error'});
                     }
             });
         }
