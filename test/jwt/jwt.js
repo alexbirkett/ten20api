@@ -13,7 +13,7 @@ var port = 3012;
 var url = 'http://localhost:' + port;
 var auth = require('./../helper/auth')(url, request);
 
-var dbUrl = 'mongodb://localhost/testPasswordReset';
+var dbUrl = 'mongodb://localhost/jwt';
 
 describe('test password reset endpoint', function () {
 
