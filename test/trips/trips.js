@@ -17,7 +17,7 @@ var SIX_HOURS = 1000 * 60 * 60 * 6;
 var THREE_HOURS = 1000 * 60 * 60 * 3;
 var time = +new Date('Tue Sep 05 1978 10:00:00 GMT');
 
-var getUnusedPort = require('../port-helper');
+var getUnusedPort = require('../helper/port-helper');
 var port = getUnusedPort();
 
 var url = 'http://localhost:' + port;

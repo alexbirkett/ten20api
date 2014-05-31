@@ -11,7 +11,7 @@ var assert = require('assert');
 var async = require('async');
 var dropDatabase = require('../../lib/drop-database');
 
-var getUnusedPort = require('../port-helper');
+var getUnusedPort = require('../helper/port-helper');
 var port = getUnusedPort();
 
 var url = 'http://localhost:' + port;

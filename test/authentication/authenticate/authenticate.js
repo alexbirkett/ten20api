@@ -8,7 +8,7 @@ var dropDatabase = require('../../../lib/drop-database');
 var configRoute = require('../../../lib/route-config');
 
 
-var getUnusedPort = require('../../port-helper');
+var getUnusedPort = require('../../helper/port-helper');
 var port = getUnusedPort();
 console.log(port);
 

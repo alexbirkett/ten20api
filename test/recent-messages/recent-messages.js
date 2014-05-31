@@ -1,4 +1,4 @@
-var getUnusedPort = require('../port-helper');
+var getUnusedPort = require('../helper/port-helper');
 var port = getUnusedPort();
 
 require('./../helper/collection')('recent_messages', port);
