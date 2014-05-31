@@ -61,8 +61,8 @@ var setTrackerDefaultValuesIfRequired = function(trackerDoc, timestampNow, callb
     }
 };
 
-var updateTracker = function (serial, message, timestampNow, callback) {
-    var query = { serial: serial};
+var updateTracker = function (query, message, timestampNow, callback) {
+
     var data = {
         $set: {
             lastMessage: message,
@@ -198,12 +198,11 @@ var createRequest =  function(req, res, userId) {
     return request;
 };
 
-var handleMessage = function(req, res) {
+var handleMessage = function(query, message, callback) {
     var timestampNow = util.currentTimeMillis();
-    var message = req.body;
     var trackerDoc;
     async.waterfall([function(callback) {
-        updateTracker(req.params.id, message, timestampNow, callback);
+        updateTracker(query, message, timestampNow, callback);
     }, function(trackerDoc, callback) {
         setTrackerDefaultValuesIfRequired(trackerDoc, timestampNow, callback)
     }, function(pTrackerDoc, callback) {
@@ -213,24 +212,27 @@ var handleMessage = function(req, res) {
         rollOverTripIfRequired(trackerDoc, timestampNow, callback);
         handleIdChanged(trackerDoc);
     }], function(err) {
-        if (err) {
-            if (err === 'not found') {
-                res.json(404, {});
-            } else {
-                res.json(500, {});
-            }
-        } else {
-            res.json(200, {});
-        }
+        callback(err);
     });
-}
+};
 
 module.exports =
 {
     message: {
         ":id": {
             post: function (req, res) {
-                handleMessage(req, res);
+                var query = { serial: req.params.id };
+                handleMessage(query, req.body, function(err) {
+                    if (err) {
+                        if (err === 'not found') {
+                            res.json(404, {});
+                        } else {
+                            res.json(500, {});
+                        }
+                    } else {
+                        res.json(200, {});
+                    }
+                });
             }
         },
         notify: {
