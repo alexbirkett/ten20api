@@ -1,5 +1,8 @@
 
-require('./../helper/collection')('trackers', 3004);
+var getUnusedPort = require('../port-helper');
+var port = getUnusedPort();
+
+require('./../helper/collection')('trackers', port);
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient
 

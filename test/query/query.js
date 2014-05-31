@@ -11,7 +11,8 @@ var assert = require('assert');
 var async = require('async');
 var dropDatabase = require('../../lib/drop-database');
 
-var port = 3007;
+var getUnusedPort = require('../port-helper');
+var port = getUnusedPort();
 
 var url = 'http://localhost:' + port;
 var auth = require('./../helper/auth')(url, requestApi.defaults({followRedirect: false}));

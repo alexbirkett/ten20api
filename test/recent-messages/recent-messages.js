@@ -1,4 +1,7 @@
-require('./../helper/collection')('recent_messages', 3014);
+var getUnusedPort = require('../port-helper');
+var port = getUnusedPort();
+
+require('./../helper/collection')('recent_messages', port);
 var assert = require('assert');
 var MongoClient = require('mongodb').MongoClient
 

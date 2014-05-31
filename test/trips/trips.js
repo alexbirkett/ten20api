@@ -17,9 +17,8 @@ var SIX_HOURS = 1000 * 60 * 60 * 6;
 var THREE_HOURS = 1000 * 60 * 60 * 3;
 var time = +new Date('Tue Sep 05 1978 10:00:00 GMT');
 
-
-
-var port = 3013;
+var getUnusedPort = require('../port-helper');
+var port = getUnusedPort();
 
 var url = 'http://localhost:' + port;
 var auth = require('./../helper/auth')(url, unauthenticatedRequest);

@@ -14,7 +14,9 @@ var db;
 
 var dbUrl = 'mongodb://localhost/testCollectionAdmin';
 
-var port = 3011;
+var getUnusedPort = require('../port-helper');
+var port = getUnusedPort();
+
 var url = 'http://localhost:' + port;
 
 describe('test collection admin', function () {

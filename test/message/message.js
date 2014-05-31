@@ -14,7 +14,8 @@ var configRoute = require('../../lib/route-config');
 
 
 
-var port = 3008;
+var getUnusedPort = require('../port-helper');
+var port = getUnusedPort();
 
 var url = 'http://localhost:' + port;
 var auth = require('./../helper/auth')(url, request);
