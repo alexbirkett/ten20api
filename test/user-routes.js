@@ -9,7 +9,7 @@ var configRoutes = require('../lib/route-config');
 
 var port = 3006;
 
-var dbName = 'testUsers';
+var dbName = 'userRoutes';
 var dbUrl = 'mongodb://localhost/' + dbName;
 
 describe('user routes', function () {
@@ -17,12 +17,13 @@ describe('user routes', function () {
 
     var credential = {
         email: 'test@ten20.com',
-        password: 'test'
+        password: 'testtest',
+        username: 'testertesterson'
     };
 
     var invalidCredential = {
         email: 'test@ten20.com',
-        password: 'test2'
+        password: 'testtest2'
     };
 
 
@@ -54,6 +55,7 @@ describe('user routes', function () {
         request.post({url: url + '/signup', json: credential}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(200, response.statusCode);
+            console.log(body);
             done();
         });
     });

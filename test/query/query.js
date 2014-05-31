@@ -70,7 +70,8 @@ var dbUrl = 'mongodb://localhost/testQuery';
 
 var credential1 = {
     email: 'test@ten20.com',
-    password: 'passwordone'
+    password: 'passwordone',
+    username: 'testertesterson'
 };
 
 var collectionUrl = url + '/' + collection;

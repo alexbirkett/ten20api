@@ -28,7 +28,8 @@ var dbUrl = 'mongodb://localhost/testTrips2';
 
 var credential = {
     email: 'test@ten20.com',
-    password: 'passwordone'
+    password: 'passwordone',
+    username: 'testertesterson'
 };
 
 var tracker1 = {
