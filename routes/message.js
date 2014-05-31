@@ -198,35 +198,39 @@ var createRequest =  function(req, res, userId) {
     return request;
 };
 
+var handleMessage = function(req, res) {
+    var timestampNow = util.currentTimeMillis();
+    var message = req.body;
+    var trackerDoc;
+    async.waterfall([function(callback) {
+        updateTracker(req.params.id, message, timestampNow, callback);
+    }, function(trackerDoc, callback) {
+        setTrackerDefaultValuesIfRequired(trackerDoc, timestampNow, callback)
+    }, function(pTrackerDoc, callback) {
+        trackerDoc = pTrackerDoc;
+        addMessage(trackerDoc.userId, trackerDoc._id, message, timestampNow, callback);
+    }, function(callback) {
+        rollOverTripIfRequired(trackerDoc, timestampNow, callback);
+        handleIdChanged(trackerDoc);
+    }], function(err) {
+        if (err) {
+            if (err === 'not found') {
+                res.json(404, {});
+            } else {
+                res.json(500, {});
+            }
+        } else {
+            res.json(200, {});
+        }
+    });
+}
+
 module.exports =
 {
     message: {
         ":id": {
             post: function (req, res) {
-                var timestampNow = util.currentTimeMillis();
-                var message = req.body;
-                var trackerDoc;
-                async.waterfall([function(callback) {
-                    updateTracker(req.params.id, message, timestampNow, callback);
-                }, function(trackerDoc, callback) {
-                    setTrackerDefaultValuesIfRequired(trackerDoc, timestampNow, callback)
-                }, function(pTrackerDoc, callback) {
-                    trackerDoc = pTrackerDoc;
-                    addMessage(trackerDoc.userId, trackerDoc._id, message, timestampNow, callback);
-                }, function(callback) {
-                    rollOverTripIfRequired(trackerDoc, timestampNow, callback);
-                    handleIdChanged(trackerDoc);
-                }], function(err) {
-                    if (err) {
-                        if (err === 'not found') {
-                            res.json(404, {});
-                        } else {
-                            res.json(500, {});
-                        }
-                    } else {
-                        res.json(200, {});
-                    }
-                });
+                handleMessage(req, res);
             }
         },
         notify: {
