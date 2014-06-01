@@ -235,6 +235,26 @@ module.exports =
                 });
             }
         },
+        "by-id": {
+            use: authenticationMiddleware.middlewareFunction,
+            ":id": {
+                post: function (req, res) {
+                    var query = { _id: new ObjectID(req.params.id), userId: new ObjectID(req.user._id) };
+                    console.log(query);
+                    handleMessage(query, req.body, function(err) {
+                        if (err) {
+                            if (err === 'not found') {
+                                res.json(404, {});
+                            } else {
+                                res.json(500, {});
+                            }
+                        } else {
+                            res.json(200, {});
+                        }
+                    });
+                }
+            }
+        },
         notify: {
             use: authenticationMiddleware.middlewareFunction,
             ":id": {
