@@ -61,35 +61,77 @@ var setTrackerDefaultValuesIfRequired = function(trackerDoc, timestampNow, callb
     }
 };
 
-var updateTracker = function (query, message, timestampNow, callback) {
-
-    var data = {
-        $set: {
-            lastMessage: message,
-            lastUpdate: timestampNow
-        } };
-
-    if (message.location && isValidLocation(message.location)) {
-        data.$set.location = message.location;
-    }
-    var timeBefore = new Date().getTime();
-    getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
-        // if the query does not find any documents, findAndModify can call back with no error and a null document
-        if (!doc) {
-            err = 'not found';
+var getLastMessage = function(message) {
+    var lastMessage;
+    if (message instanceof Array) {
+        if (message.length > 0) {
+            lastMessage = message[message.length - 1];
         }
-        callback(err, doc);
-    });
+    } else {
+        lastMessage = message;
+    }
+    return lastMessage;
+}
+
+var ensureIsArray = function(objectOrArray) {
+    var array;
+    if (objectOrArray instanceof Array) {
+        array = objectOrArray;
+    } else {
+        array = [];
+        array[0] = objectOrArray;
+    }
+    return array;
+}
+var updateTracker = function (query, messageOrArrayOfMessages, timestampNow, callback) {
+
+    var messageArray = ensureIsArray(messageOrArrayOfMessages);
+    var lastMessage = messageArray[messageArray.length - 1];
+
+    if (lastMessage) {
+        var data = {
+            $set: {
+                lastMessage: lastMessage,
+                lastUpdate: timestampNow
+            } };
+
+        for (var i = 0; i < messageArray.length; i++) {
+            var message = messageArray[i];
+            if (message.location && isValidLocation(message.location)) {
+                data.$set.location = message.location;
+            }
+        }
+
+        var timeBefore = new Date().getTime();
+        getTrackerCollection().findAndModify(query, null, data, { new:true /*fields:{ id_:1}*/ }, function(err, doc) {
+            // if the query does not find any documents, findAndModify can call back with no error and a null document
+            if (!doc) {
+                err = 'not found';
+            }
+            callback(err, doc);
+        });
+    } else {
+        callback('no messages sent');
+    }
+
 };
 
-var addMessage = function(userId, trackerId, message, timestampNow, callback) {
-    var object = {
-        receivedTime: new Date(timestampNow),
-        message: message,
-        trackerId: trackerId,
-        userId: userId
-    };
-    getMessageCollection().insert(object, function(err) {
+var addMessage = function(userId, trackerId, messageOrArrayOfMessages, timestampNow, callback) {
+
+    var messageArray = ensureIsArray(messageOrArrayOfMessages);
+
+    var objects = [];
+    for (var i = 0; i < messageArray.length; i++) {
+        var message = messageArray[i];
+        objects.push({
+            receivedTime: new Date(timestampNow),
+            message: message,
+            trackerId: trackerId,
+            userId: userId
+        });
+    }
+
+    getMessageCollection().insert(objects, function(err) {
         callback(err);
     });
 };
@@ -240,7 +282,6 @@ module.exports =
             ":id": {
                 post: function (req, res) {
                     var query = { _id: new ObjectID(req.params.id), userId: new ObjectID(req.user._id) };
-                    console.log(query);
                     handleMessage(query, req.body, function(err) {
                         if (err) {
                             if (err === 'not found') {
