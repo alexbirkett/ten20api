@@ -1,7 +1,7 @@
 var scrypt = require("scrypt");
 var db = require('../lib/db.js');
 var MAX_TIME = 0.1;
-var jwt = require('jsonwebtoken');
+var jsonwebtoken = require('jsonwebtoken');
 var authenticationMiddleware = require('../lib/authentication-middleware');
 var async = require('async');
 var getUserCollection = function () {
@@ -54,7 +54,11 @@ module.exports = {
                 if (err) {
                     res.json(401, { message: 'Invalid password' });
                 } else {
-                    var token = jwt.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: 60 * 5 });
+                    expiresInMinutes = requestParams.expiresInMinutes;
+                    if (!expiresInMinutes) {
+                        expiresInMinutes = 60 * 5;
+                    }
+                    var token = jsonwebtoken.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: expiresInMinutes });
                     res.json({ token: token });
                 }
             });
