@@ -8,6 +8,8 @@ var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
 var dbSingleton = require('./lib/db');
+var bodyParser = require('body-parser');
+var morgan  = require('morgan');
 
 var server;
 module.exports.startServer = function (port, dbUrl, configRoute, callback) {
@@ -22,19 +24,14 @@ module.exports.startServer = function (port, dbUrl, configRoute, callback) {
 
             dbSingleton.setDb(db);
             app.set('port', port);
-            app.use(express.favicon());
-            app.use(express.urlencoded());
-            app.use(express.json());
-            app.use(express.methodOverride());
+            app.use(bodyParser());
             if ('development' == app.get('env')) {
-                app.use(express.errorHandler());
-                app.use(express.logger('dev'));
+                app.use(morgan());
             }
 
             configRoute(app, callback);
         },
         function(callback) {
-            app.use(app.router);
             console.log('starting server on port ' + app.get('port'));
             server.listen(app.get('port'), callback);
         }
