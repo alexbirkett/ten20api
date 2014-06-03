@@ -47,16 +47,16 @@ var tracker3 = {
 };
 
 var messageUpdate1 = {
-    timestamp: new Date(1385473735306),
     location : {
+        timestamp: new Date(1385473735306),
         latitude: 52.710074934026935,
         longitude: -1.8910935332479069
     }
 };
 
 var messageUpdate2 = {
-    timestamp: new Date(1385473735307),
     location : {
+        timestamp: new Date(1385473735307),
         latitude: 53.710074934026936,
         longitude: -1.8910935332479069
     }
@@ -152,12 +152,11 @@ describe('test message endpoint', function () {
             assert.equal(200, response.statusCode);
             credential1request.get({url: url + '/trackers/528538f0d8d584853c000002', json: true }, function (error, response, body) {
                 assert.equal(response.statusCode, 200);
-
+                assert.equal(body.location.timestamp, '2013-11-26T13:48:55.306Z');
                 assert.equal(body.location.latitude, 52.710074934026935);
                 assert.equal(body.location.longitude, -1.8910935332479069);
                 assert.equal(body.lastMessage.location.latitude, 52.710074934026935);
                 assert.equal(body.lastMessage.location.longitude, -1.8910935332479069);
-
                 done();
             });
         });

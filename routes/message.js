@@ -5,6 +5,7 @@ var async = require('async');
 var tripBuilder = require('../lib/trip-builder');
 var authenticationMiddleware = require('../lib/authentication-middleware.js');
 var ObjectID = require('mongodb').ObjectID;
+var parseTimeStamps = require('../lib/timestamp-parser');
 
 var DEFAULT_TRIP_DURATION = 6 * 60 * 60 * 1000;
 
@@ -243,6 +244,7 @@ var createRequest =  function(req, res, userId) {
 var handleMessage = function(query, message, callback) {
     var timestampNow = util.currentTimeMillis();
     var trackerDoc;
+    parseTimeStamps(message);
     async.waterfall([function(callback) {
         updateTracker(query, message, timestampNow, callback);
     }, function(trackerDoc, callback) {
