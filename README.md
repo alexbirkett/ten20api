@@ -6,6 +6,8 @@ ten20api
 
 ## [Secure your server](https://library.linode.com/securing-your-server)
 
+## [Auto install security updates](https://help.ubuntu.com/10.04/serverguide/automatic-updates.html)
+
 
 ### Install git
     sudo apt-get install git
