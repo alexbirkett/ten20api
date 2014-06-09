@@ -15,6 +15,9 @@ ten20api
 ### Install nginx
     sudo apt-get install nginx
     
+### Install mongo
+    sudo apt-get install mongodb
+    
 ### Sample /etc/nginx/nginx.conf
 
 This may not be exactly what you want. The server name and certificate paths will require modification. 
