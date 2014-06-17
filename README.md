@@ -195,7 +195,7 @@ add following line at the end of the file
     
 ### Install node tools
 
-    npm update -g bower
+    npm install -g bower
     npm install -g grunt-cli
     npm install -g forever
 
