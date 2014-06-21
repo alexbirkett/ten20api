@@ -130,16 +130,9 @@ module.exports = {
             var requestParams = req.body;
             async.waterfall([
                 function (callback) {
-                    var err = getErrorForPassword(requestParams.password);
-                    if (err) {
-                        callback(err);
-                    }
-                    err = getErrorForEmail(requestParams.email);
-                    if (err) {
-                        callback(err);
-                    }
-                    err = getErrorForUserName(requestParams.username);
-                    callback(err);
+                    callback(getErrorForPassword(requestParams.password) ||
+                             getErrorForEmail(requestParams.email) ||
+                             getErrorForUserName(requestParams.username));
                 },
                 function (callback) {
                     getUserCollection().count({$or: [{ username: requestParams.username }, { email: requestParams.email }]}, function(err, count) {
