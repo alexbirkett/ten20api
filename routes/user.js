@@ -4,6 +4,8 @@ var MAX_TIME = 0.1;
 var jsonwebtoken = require('jsonwebtoken');
 var authenticationMiddleware = require('../lib/authentication-middleware');
 var async = require('async');
+var ObjectID = require('mongodb').ObjectID;
+
 var getUserCollection = function () {
     return db.getDb().collection('user');
 };
@@ -19,7 +21,17 @@ module.exports = {
 
     user: {
         get: function (req, res) {
-            res.json(req.user);
+            getUserCollection().findOne({_id: new ObjectID(req.user._id)}, function(err, user) {
+                if (err || !user) {
+                    res.json(500, { message: "could not get user"});
+                } else {
+                    var responseObject = {
+                        email: user.email,
+                        username: user.username
+                    };
+                    res.json(responseObject);
+                }
+            });
         },
         use: authenticationMiddleware.middlewareFunction
     },

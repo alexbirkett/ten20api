@@ -55,7 +55,6 @@ describe('user routes', function () {
         request.post({url: url + '/signup', json: credential}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(200, response.statusCode);
-            console.log(body);
             done();
         });
     });
@@ -119,8 +118,8 @@ describe('user routes', function () {
         request.get({url: url + '/user', headers: headers, json:true}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(200, response.statusCode);
-            //body.should.have.property('email');
-            body.should.have.property('_id');
+            assert.equal(body.email, 'test@ten20.com');
+            assert.equal(body.username, 'testertesterson');
             done();
         });
     });
@@ -128,7 +127,7 @@ describe('user routes', function () {
     it('should not be possible to access info endpoint without token', function (done) {
         request.get(url + '/user', function (error, response, body) {
             assert.ifError(error);
-            assert.equal(401, response.statusCode);
+            assert.equal(response.statusCode, 401);
             done();
         });
 
