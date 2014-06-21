@@ -17,6 +17,55 @@ var PASSWORD_TOO_SHORT = 'password too short';
 var INVALID_EMAIL_ADDRESS = 'invalid email address';
 var INVALID_USERNAME = 'invalid user name';
 
+var sendResponseForError = function(res, err) {
+    if (!err) {
+        res.json({ message: 'account created'});
+    } else if (err === USER_ALREADY_EXISTS) {
+        res.json(403, { message: 'user already exists!'});
+    } else if (err === NO_PASSWORD_SPECIFIED) {
+        res.json(400, { message: 'no password specified'});
+    } else if (err === NO_USERNAME_SPECIFIED) {
+        res.json(400, { message: 'no username specified'});
+    } else if (err === PASSWORD_TOO_SHORT) {
+        res.json(400, { message: 'password must be 8 characters or longer'});
+    } else if (err === INVALID_EMAIL_ADDRESS) {
+        res.json(400, { message: 'invalid email address'});
+    } else if (err === INVALID_USERNAME) {
+        res.json(400, { message: 'invalid username'});
+    } else {
+        res.json(500, { message: 'general error'});
+    }
+};
+
+var getErrorForPassword = function(password) {
+    if (!password) {
+        return NO_PASSWORD_SPECIFIED;
+    } else if (password.length < 8) {
+        return PASSWORD_TOO_SHORT;
+    } else {
+        return undefined;
+    }
+}
+
+var getErrorForUserName = function(username) {
+    if (!username || username.length < 1) {
+        return NO_USERNAME_SPECIFIED;
+    } else if (username.indexOf('@') > -1) {
+        return INVALID_USERNAME;
+    } else {
+        return undefined;
+    }
+};
+
+var getErrorForEmail = function(email) {
+    // email is not required
+    if (email && (email.indexOf('@') < 0 || email.length < 3)) {
+        return INVALID_EMAIL_ADDRESS;
+    } else {
+        return undefined;
+    }
+};
+
 module.exports = {
 
     user: {
@@ -81,19 +130,16 @@ module.exports = {
             var requestParams = req.body;
             async.waterfall([
                 function (callback) {
-                    if (!requestParams.password) {
-                        callback(NO_PASSWORD_SPECIFIED);
-                    } else if (requestParams.password.length < 8) {
-                        callback(PASSWORD_TOO_SHORT);
-                    } else if (!requestParams.username || requestParams.username.length < 1) {
-                        callback(NO_USERNAME_SPECIFIED);
-                    } else if (requestParams.username.indexOf('@') > -1) {
-                        callback(INVALID_USERNAME);
-                    } else if (requestParams.email && (requestParams.email.indexOf('@') < 0 || requestParams.email.length < 3)) {
-                        callback(INVALID_EMAIL_ADDRESS);
-                    } else {
-                        callback();
+                    var err = getErrorForPassword(requestParams.password);
+                    if (err) {
+                        callback(err);
                     }
+                    err = getErrorForEmail(requestParams.email);
+                    if (err) {
+                        callback(err);
+                    }
+                    err = getErrorForUserName(requestParams.username);
+                    callback(err);
                 },
                 function (callback) {
                     getUserCollection().count({$or: [{ username: requestParams.username }, { email: requestParams.email }]}, function(err, count) {
@@ -116,23 +162,7 @@ module.exports = {
                 }],
                 function (err) {
                     console.log(err);
-                    if (!err) {
-                        res.json({ message: 'account created'});
-                    } else if (err === USER_ALREADY_EXISTS) {
-                        res.json(403, { message: 'user already exists!'});
-                    } else if (err === NO_PASSWORD_SPECIFIED) {
-                        res.json(400, { message: 'no password specified'});
-                    } else if (err === NO_USERNAME_SPECIFIED) {
-                        res.json(400, { message: 'no username specified'});
-                    } else if (err === PASSWORD_TOO_SHORT) {
-                        res.json(400, { message: 'password must be 8 characters or longer'});
-                    } else if (err === INVALID_EMAIL_ADDRESS) {
-                        res.json(400, { message: 'invalid email address'});
-                    } else if (err === INVALID_USERNAME) {
-                        res.json(400, { message: 'invalid username'});
-                    } else {
-                        res.json(500, { message: 'general error'});
-                    }
+                    sendResponseForError(res, err);
             });
         }
     }
