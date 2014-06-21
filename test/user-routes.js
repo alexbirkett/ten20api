@@ -41,9 +41,9 @@ describe('user routes', function () {
         server.close(done);
     });
 
-    it('should not be possible to access info endpoint', function (done) {
+    it('should not be possible to access user endpoint', function (done) {
 
-        request.get(url + '/user/info', function (error, response, body) {
+        request.get(url + '/user', function (error, response, body) {
             assert.ifError(error);
             assert.equal(401, response.statusCode);
             done();
@@ -61,7 +61,7 @@ describe('user routes', function () {
     });
 
     it('should still not be possible to access info endpoint after create account', function (done) {
-        request.get(url + '/user/info', function (error, response, body) {
+        request.get(url + '/user', function (error, response, body) {
             assert.ifError(error);
             assert.equal(401, response.statusCode);
             done();
@@ -89,8 +89,8 @@ describe('user routes', function () {
 
     });
 
-    it('should still not be possible to access info endpoint after invalid login attempt', function (done) {
-        request.get(url + '/user/info', function (error, response, body) {
+    it('should still not be possible to access user endpoint after invalid login attempt', function (done) {
+        request.get(url + '/user', function (error, response, body) {
             assert.ifError(error);
             assert.equal(401, response.statusCode);
             done();
@@ -115,8 +115,8 @@ describe('user routes', function () {
 
     });
 
-    it('should access info endpoint', function (done) {
-        request.get({url: url + '/user/info', headers: headers, json:true}, function (error, response, body) {
+    it('should access user endpoint', function (done) {
+        request.get({url: url + '/user', headers: headers, json:true}, function (error, response, body) {
             assert.ifError(error);
             assert.equal(200, response.statusCode);
             //body.should.have.property('email');
@@ -126,7 +126,7 @@ describe('user routes', function () {
     });
 
     it('should not be possible to access info endpoint without token', function (done) {
-        request.get(url + '/user/info', function (error, response, body) {
+        request.get(url + '/user', function (error, response, body) {
             assert.ifError(error);
             assert.equal(401, response.statusCode);
             done();

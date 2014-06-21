@@ -106,7 +106,7 @@ describe('test authentication', function () {
 
     it('should  be possible to get user info with a token', function (done) {
 
-        var options = { url: url + '/user/info',
+        var options = { url: url + '/user',
             json: true,
             headers: {
                 'Authorization': 'Bearer ' + token

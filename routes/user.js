@@ -18,10 +18,8 @@ var INVALID_USERNAME = 'invalid user name';
 module.exports = {
 
     user: {
-        info: {
-            get: function (req, res) {
-                res.json(req.user);
-            }
+        get: function (req, res) {
+            res.json(req.user);
         },
         use: authenticationMiddleware.middlewareFunction
     },
