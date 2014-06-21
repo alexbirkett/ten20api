@@ -120,6 +120,7 @@ describe('user routes', function () {
             assert.equal(200, response.statusCode);
             assert.equal(body.email, 'test@ten20.com');
             assert.equal(body.username, 'testertesterson');
+            assert(body._id);
             done();
         });
     });

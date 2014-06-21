@@ -27,7 +27,8 @@ module.exports = {
                 } else {
                     var responseObject = {
                         email: user.email,
-                        username: user.username
+                        username: user.username,
+                        _id : user._id
                     };
                     res.json(responseObject);
                 }
