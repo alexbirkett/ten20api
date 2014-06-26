@@ -10,6 +10,19 @@ var getUserCollection = function () {
     return db.getDb().collection('user');
 };
 
+var addIndicesToUser = function (callback) {
+    var collection = getUserCollection();
+    async.series([
+        function (callback) {
+            collection.ensureIndex({ "email": 1 }, { unique: true }, callback);
+        },
+        function (callback) {
+            collection.ensureIndex({ "username": 1 }, { unique: true }, callback);
+        }], function (err) {
+        callback(err);
+    });
+};
+
 var NO_PASSWORD_SPECIFIED = 'no password specified';
 var NO_USERNAME_SPECIFIED = 'no username specified';
 var USER_ALREADY_EXISTS = 'user already exists';
@@ -17,11 +30,15 @@ var PASSWORD_TOO_SHORT = 'password too short';
 var INVALID_EMAIL_ADDRESS = 'invalid email address';
 var INVALID_USERNAME = 'invalid user name';
 
+var isDuplicateKeyError = function(err) {
+    return err.name && err.name == 'MongoError' && err.err && err.err.indexOf('duplicate key') > -1;
+};
+
 var sendResponseForError = function(res, err) {
     if (!err) {
         res.json({ message: 'account created'});
-    } else if (err === USER_ALREADY_EXISTS) {
-        res.json(403, { message: 'user already exists!'});
+    } else if (err === USER_ALREADY_EXISTS || isDuplicateKeyError(err) ) {
+        res.json(403, { message: 'user already exists'});
     } else if (err === NO_PASSWORD_SPECIFIED) {
         res.json(400, { message: 'no password specified'});
     } else if (err === NO_USERNAME_SPECIFIED) {
@@ -37,36 +54,69 @@ var sendResponseForError = function(res, err) {
     }
 };
 
+var isValidPassword = function(password) {
+    return (password.length >= 8);
+};
+
+var isValidUserName = function(username) {
+    return username.indexOf('@') === -1;
+};
+
 var getErrorForPassword = function(password) {
     if (!password) {
         return NO_PASSWORD_SPECIFIED;
-    } else if (password.length < 8) {
-        return PASSWORD_TOO_SHORT;
-    } else {
+    } else if (isValidPassword(password)) {
         return undefined;
+    } else {
+        return PASSWORD_TOO_SHORT;
     }
-}
+};
+
+var getErrorForPasswordIfExists = function(password) {
+    if (password == null || password === undefined) {
+        return undefined;
+    } else {
+        if (isValidPassword(password)) {
+            return undefined;
+        } else {
+            return PASSWORD_TOO_SHORT;
+        }
+    }
+};
 
 var getErrorForUserName = function(username) {
     if (!username || username.length < 1) {
         return NO_USERNAME_SPECIFIED;
-    } else if (username.indexOf('@') > -1) {
+    } else if (!isValidUserName(username)) {
         return INVALID_USERNAME;
     } else {
         return undefined;
     }
 };
 
-var getErrorForEmail = function(email) {
-    // email is not required
-    if (email && (email.indexOf('@') < 0 || email.length < 3)) {
+var getErrorForUserNameIfExists = function(username) {
+    if (username == null || username === undefined) {
+        return undefined;
+    } else {
+        if (username.length < 1) {
+            return NO_USERNAME_SPECIFIED;
+        } else if (!isValidUserName(username)) {
+            return INVALID_USERNAME;
+        } else {
+            return undefined;
+        }
+    }
+};
+
+var getErrorForEmailIfExists = function(email) {
+    if (email !== null && email !== undefined && (email.indexOf('@') < 0 || email.length < 3)) {
         return INVALID_EMAIL_ADDRESS;
     } else {
         return undefined;
     }
 };
 
-module.exports = {
+var routes = {
 
     user: {
         get: function (req, res) {
@@ -82,6 +132,44 @@ module.exports = {
                     res.json(responseObject);
                 }
             });
+        },
+        patch: function(req, res) {
+
+
+
+            var requestParams = req.body;
+            async.waterfall([
+                function (callback) {
+                        callback(getErrorForUserNameIfExists(requestParams.username) ||
+                                 getErrorForPasswordIfExists(requestParams.password) ||
+                                 getErrorForEmailIfExists(requestParams.email));
+                },
+                function (callback) {
+                    if (requestParams.password) {
+                        scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
+                    } else {
+                        callback(null, null);
+                    }
+                },
+                function (pwdhash, callback) {
+                    var userObject = { };
+
+                    if (requestParams.email) {
+                        userObject.email = requestParams.email;
+                    }
+
+                    if (requestParams.username) {
+                        userObject.username = requestParams.username;
+                    }
+                    if (pwdhash != null) {
+                        userObject.hash = pwdhash;
+                    }
+
+                    getUserCollection().update({_id: new ObjectID(req.user._id)}, { $set: userObject }, { upsert : true}, callback);
+                }],
+                function (err) {
+                    sendResponseForError(res, err);
+                });
         },
         use: authenticationMiddleware.middlewareFunction
     },
@@ -131,7 +219,7 @@ module.exports = {
             async.waterfall([
                 function (callback) {
                     callback(getErrorForPassword(requestParams.password) ||
-                             getErrorForEmail(requestParams.email) ||
+                             getErrorForEmailIfExists(requestParams.email) ||
                              getErrorForUserName(requestParams.username));
                 },
                 function (callback) {
@@ -159,4 +247,10 @@ module.exports = {
             });
         }
     }
+};
+
+module.exports = function(callback) {
+    addIndicesToUser(function(err) {
+            callback(err, routes);
+    });
 };

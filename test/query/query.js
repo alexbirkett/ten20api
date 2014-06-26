@@ -1,6 +1,6 @@
 var async = require('async');
 var configureDryRoutes = require('express-dry-router');
-var user = require('../../routes/user');
+var getUserRoute = require('../../routes/user');
 var collectionApi = require('../../lib/collection-api');
 var databaseUtils = require('../../lib/database-utils');
 var should = require('should');
@@ -29,12 +29,23 @@ var getCollectionRoute = function (collection, indexes, callback) {
 var collection = 'items';
 
 var configRoutes = function (app, callback) {
-    getCollectionRoute(collection, ['user', 'firstName', 'lastName', 'age', 'british'], function (err, route) {
-        configureDryRoutes(route, app, undefined, ['use']);
-        configureDryRoutes(user, app, undefined, ['use']);
-        configureDryRoutes(route, app);
-        configureDryRoutes(user, app);
-        callback(err);
+
+    async.parallel([function(callback) {
+        getCollectionRoute(collection, ['user', 'firstName', 'lastName', 'age', 'british'], callback);
+    },function(callback) {
+        getUserRoute(callback);
+    }],function(err, results) {
+        if (err) {
+            callback(err);
+        } else {
+            var route = results[0];
+            var user = results[1];
+            configureDryRoutes(route, app, undefined, ['use']);
+            configureDryRoutes(user, app, undefined, ['use']);
+            configureDryRoutes(route, app);
+            configureDryRoutes(user, app);
+            callback(err);
+        }
     });
 };
 
