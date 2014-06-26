@@ -17,5 +17,10 @@ var argv = optimist.usage('Usage: $0  --dbname [string] --port [num]').
     .argv;
 
 server.startServer(argv.port, 'mongodb://localhost/' + argv.dbname, configRoute, function(err) {
-    console.log('servar started on port ' + argv.port + ' dbname ' + argv.dbname);
+    if (err) {
+        console.log('server did not start ' + err);
+    } else {
+        console.log('server started on port ' + argv.port + ' dbname ' + argv.dbname);
+    }
+
 });
