@@ -4,14 +4,15 @@
 
 var gotTopProtocol = require('../protocols/gotop.js');
 
-module.exports = {
-
-    protocols: {
-        ":id": {
-            get: function (req, res) {
-                res.json(gotTopProtocol);
+module.exports = function() {
+    return {
+        protocols: {
+            ":id": {
+                get: function (req, res) {
+                    res.json(gotTopProtocol);
+                }
             }
         }
-    }
 
+    };
 };

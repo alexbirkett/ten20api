@@ -33,7 +33,7 @@ describe('user routes', function () {
         async.series([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
-            server.startServer(port, dbUrl, configRoutes, callback);
+            server.startServer(port, dbUrl, "secret", configRoutes, callback);
         }], done);
     });
 

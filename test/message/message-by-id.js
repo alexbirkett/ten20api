@@ -81,7 +81,7 @@ describe('message by id', function () {
         async.series([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
-            server.startServer(port, dbUrl, configRoute, callback);
+            server.startServer(port, dbUrl, "secret", configRoute, callback);
         },function (callback) {
             auth.signUp(credential1, callback);
         },function (callback) {

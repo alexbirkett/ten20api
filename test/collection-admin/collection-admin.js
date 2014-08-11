@@ -26,7 +26,7 @@ describe('test collection admin', function () {
         async.waterfall([function (callback) {
             dropDatabase(dbUrl, callback);
         }, function (callback) {
-            server.startServer(port, dbUrl, configRoute, callback);
+            server.startServer(port, dbUrl, "secret", configRoute, callback);
         }, function(callback) {
             MongoClient.connect(dbUrl, callback);
         }, function(adb, callback) {

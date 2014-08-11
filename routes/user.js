@@ -3,6 +3,7 @@ var db = require('../lib/db.js');
 var MAX_TIME = 0.1;
 var jsonwebtoken = require('jsonwebtoken');
 var authenticationMiddleware = require('../lib/authentication-middleware');
+var secret = require('../lib/secret');
 var async = require('async');
 var ObjectID = require('mongodb').ObjectID;
 
@@ -116,141 +117,148 @@ var getErrorForEmailIfExists = function(email) {
     }
 };
 
-var routes = {
+var getRoutes = function () {
 
-    user: {
-        get: function (req, res) {
-            getUserCollection().findOne({_id: new ObjectID(req.user._id)}, function(err, user) {
-                if (err || !user) {
-                    res.json(500, { message: "could not get user"});
-                } else {
-                    var responseObject = {
-                        email: user.email,
-                        username: user.username,
-                        _id : user._id
-                    };
-                    res.json(responseObject);
-                }
-            });
-        },
-        patch: function(req, res) {
-
-
-
-            var requestParams = req.body;
-            async.waterfall([
-                function (callback) {
-                        callback(getErrorForUserNameIfExists(requestParams.username) ||
-                                 getErrorForPasswordIfExists(requestParams.password) ||
-                                 getErrorForEmailIfExists(requestParams.email));
-                },
-                function (callback) {
-                    if (requestParams.password) {
-                        scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
+    return  {
+        user: {
+            get: function (req, res) {
+                getUserCollection().findOne({_id: new ObjectID(req.user._id)}, function (err, user) {
+                    if (err || !user) {
+                        res.json(500, { message: "could not get user"});
                     } else {
-                        callback(null, null);
+                        var responseObject = {
+                            email: user.email,
+                            username: user.username,
+                            _id: user._id
+                        };
+                        res.json(responseObject);
                     }
-                },
-                function (pwdhash, callback) {
-                    var userObject = { };
-
-                    if (requestParams.email) {
-                        userObject.email = requestParams.email;
-                    }
-
-                    if (requestParams.username) {
-                        userObject.username = requestParams.username;
-                    }
-                    if (pwdhash != null) {
-                        userObject.hash = pwdhash;
-                    }
-
-                    getUserCollection().update({_id: new ObjectID(req.user._id)}, { $set: userObject }, { upsert : true}, callback);
-                }],
-                function (err) {
-                    sendResponseForError(res, err);
                 });
+            },
+            patch: function (req, res) {
+
+
+                var requestParams = req.body;
+                async.waterfall([
+                    function (callback) {
+                        callback(getErrorForUserNameIfExists(requestParams.username) ||
+                            getErrorForPasswordIfExists(requestParams.password) ||
+                            getErrorForEmailIfExists(requestParams.email));
+                    },
+                    function (callback) {
+                        if (requestParams.password) {
+                            scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
+                        } else {
+                            callback(null, null);
+                        }
+                    },
+                    function (pwdhash, callback) {
+                        var userObject = { };
+
+                        if (requestParams.email) {
+                            userObject.email = requestParams.email;
+                        }
+
+                        if (requestParams.username) {
+                            userObject.username = requestParams.username;
+                        }
+                        if (pwdhash != null) {
+                            userObject.hash = pwdhash;
+                        }
+
+                        getUserCollection().update({_id: new ObjectID(req.user._id)}, { $set: userObject }, { upsert: true}, callback);
+                    }],
+                    function (err) {
+                        sendResponseForError(res, err);
+                    });
+            },
+            use: authenticationMiddleware.getMiddleware()
         },
-        use: authenticationMiddleware.middlewareFunction
-    },
-    authenticate: {
-        post: function (req, res) {
-            var requestParams = req.body;
+        authenticate: {
+            post: function (req, res) {
+                var requestParams = req.body;
 
-            var profile = {};
-            async.waterfall([
-                function (callback) {
-                    if (!requestParams.password) {
-                        callback('no password specified');
+                var profile = {};
+                async.waterfall([
+                    function (callback) {
+                        if (!requestParams.password) {
+                            callback('no password specified');
+                        } else {
+                            callback();
+                        }
+                    },
+                    function (callback) {
+                        getUserCollection().findOne({$or: [
+                            { username: requestParams.email },
+                            { email: requestParams.email }
+                        ]}, function (err, user) {
+                            if (!user) {
+                                err = "user not found";
+                            }
+                            callback(err, user);
+                        });
+                    }, function (user, callback) {
+                        scrypt.verifyHash(user.hash, requestParams.password, callback);
+                        profile._id = user._id;
+                    }, function (isMatch, callback) {
+                        callback(isMatch ? undefined : 'invalid password');
+                    }], function (err) {
+                    if (err) {
+                        res.json(401, { message: 'Invalid password' });
                     } else {
-                        callback();
-                    }
-                },
-                function (callback) {
-                    getUserCollection().findOne({$or: [{ username: requestParams.email }, { email: requestParams.email }]}, function (err, user) {
-                        if (!user) {
-                            err = "user not found";
+                        expiresInMinutes = requestParams.expiresInMinutes;
+                        if (!expiresInMinutes) {
+                            expiresInMinutes = 60 * 5;
                         }
-                        callback(err, user);
-                    });
-                }, function (user, callback) {
-                    scrypt.verifyHash(user.hash, requestParams.password, callback);
-                    profile._id = user._id;
-                }, function (isMatch, callback) {
-                    callback(isMatch ? undefined : 'invalid password');
-                }], function (err) {
-                if (err) {
-                    res.json(401, { message: 'Invalid password' });
-                } else {
-                    expiresInMinutes = requestParams.expiresInMinutes;
-                    if (!expiresInMinutes) {
-                        expiresInMinutes = 60 * 5;
+                        var token = jsonwebtoken.sign(profile, secret.getSecret(), { expiresInMinutes: expiresInMinutes });
+                        res.json({ token: token });
                     }
-                    var token = jsonwebtoken.sign(profile, authenticationMiddleware.secret, { expiresInMinutes: expiresInMinutes });
-                    res.json({ token: token });
-                }
-            });
+                });
 
-        }
-    },
-    signup: {
-        post: function (req, res) {
-            var requestParams = req.body;
-            async.waterfall([
-                function (callback) {
-                    callback(getErrorForPassword(requestParams.password) ||
-                             getErrorForEmailIfExists(requestParams.email) ||
-                             getErrorForUserName(requestParams.username));
-                },
-                function (callback) {
-                    getUserCollection().count({$or: [{ username: requestParams.username }, { email: requestParams.email }]}, function(err, count) {
-                        if (count !== 0) {
-                            err = USER_ALREADY_EXISTS;
-                        }
-                        callback(err);
+            }
+        },
+        signup: {
+            post: function (req, res) {
+                var requestParams = req.body;
+                async.waterfall([
+                    function (callback) {
+                        callback(getErrorForPassword(requestParams.password) ||
+                            getErrorForEmailIfExists(requestParams.email) ||
+                            getErrorForUserName(requestParams.username));
+                    },
+                    function (callback) {
+                        getUserCollection().count({$or: [
+                            { username: requestParams.username },
+                            { email: requestParams.email }
+                        ]}, function (err, count) {
+                            if (count !== 0) {
+                                err = USER_ALREADY_EXISTS;
+                            }
+                            callback(err);
+                        });
+                    },
+                    function (callback) {
+                        scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
+                    },
+                    function (pwdhash, callback) {
+                        var userObject = {
+                            email: requestParams.email,
+                            username: requestParams.username,
+                            hash: pwdhash
+                        };
+                        getUserCollection().insert(userObject, callback);
+                    }],
+                    function (err) {
+                        console.log(err);
+                        sendResponseForError(res, err);
                     });
-                },
-                function (callback) {
-                    scrypt.passwordHash(requestParams.password, MAX_TIME, callback);
-                },
-                function (pwdhash, callback) {
-                    var userObject = {
-                        email: requestParams.email,
-                        username: requestParams.username,
-                        hash: pwdhash
-                    };
-                    getUserCollection().insert(userObject, callback);
-                }],
-                function (err) {
-                    console.log(err);
-                    sendResponseForError(res, err);
-            });
+            }
         }
     }
 };
 
 module.exports = function(callback) {
     addIndicesToUser(function(err) {
-            callback(err, routes);
+            callback(err, getRoutes());
     });
 };

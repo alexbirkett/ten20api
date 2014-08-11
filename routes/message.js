@@ -260,31 +260,13 @@ var handleMessage = function(query, message, callback) {
     });
 };
 
-module.exports =
-{
-    message: {
-        ":id": {
-            post: function (req, res) {
-                var query = { serial: req.params.id };
-                handleMessage(query, req.body, function(err) {
-                    if (err) {
-                        if (err === 'not found') {
-                            res.json(404, {});
-                        } else {
-                            res.json(500, {});
-                        }
-                    } else {
-                        res.json(200, {});
-                    }
-                });
-            }
-        },
-        "by-id": {
-            use: authenticationMiddleware.middlewareFunction,
+module.exports = function () {
+    return {
+        message: {
             ":id": {
                 post: function (req, res) {
-                    var query = { _id: new ObjectID(req.params.id), userId: new ObjectID(req.user._id) };
-                    handleMessage(query, req.body, function(err) {
+                    var query = { serial: req.params.id };
+                    handleMessage(query, req.body, function (err) {
                         if (err) {
                             if (err === 'not found') {
                                 res.json(404, {});
@@ -296,25 +278,44 @@ module.exports =
                         }
                     });
                 }
-            }
-        },
-        notify: {
-            use: authenticationMiddleware.middlewareFunction,
-            ":id": {
-                get: function (req, res) {
-                    var userId = new ObjectID(req.user._id);
-                    addRequest(req.params.id, createRequest(req, res, userId));
+            },
+            "by-id": {
+                use: authenticationMiddleware.getMiddleware(),
+                ":id": {
+                    post: function (req, res) {
+                        var query = { _id: new ObjectID(req.params.id), userId: new ObjectID(req.user._id) };
+                        handleMessage(query, req.body, function (err) {
+                            if (err) {
+                                if (err === 'not found') {
+                                    res.json(404, {});
+                                } else {
+                                    res.json(500, {});
+                                }
+                            } else {
+                                res.json(200, {});
+                            }
+                        });
+                    }
                 }
             },
-            get: function (req, res) {
-                var userId = new ObjectID(req.user._id);
-                var query = { userId: userId };
-                var request = createRequest(req, res, userId);
-                findObjects(query, function(err, objects) {
-                    for (var i = 0; i < objects.length; i++) {
-                        addRequest(objects[i]._id, request);
+            notify: {
+                use: authenticationMiddleware.getMiddleware(),
+                ":id": {
+                    get: function (req, res) {
+                        var userId = new ObjectID(req.user._id);
+                        addRequest(req.params.id, createRequest(req, res, userId));
                     }
-                });
+                },
+                get: function (req, res) {
+                    var userId = new ObjectID(req.user._id);
+                    var query = { userId: userId };
+                    var request = createRequest(req, res, userId);
+                    findObjects(query, function (err, objects) {
+                        for (var i = 0; i < objects.length; i++) {
+                            addRequest(objects[i]._id, request);
+                        }
+                    });
+                }
             }
         }
     }

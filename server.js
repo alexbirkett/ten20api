@@ -8,14 +8,15 @@ var path = require('path')
 var MongoClient = require('mongodb').MongoClient
 var async = require('async')
 var dbSingleton = require('./lib/db');
+var secretSingleton = require('./lib/secret');
 var bodyParser = require('body-parser');
 var morgan  = require('morgan');
 
 var server;
-module.exports.startServer = function (port, dbUrl, configRoute, callback) {
+module.exports.startServer = function (port, dbUrl, secret, configRoute, callback) {
     var app = express();
     server = require('http').createServer(app);
-
+    secretSingleton.setSecret(secret);
     async.waterfall([
         function (callback) {
             MongoClient.connect(dbUrl, callback);

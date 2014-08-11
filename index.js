@@ -3,7 +3,7 @@ var configRoute = require('./lib/route-config');
 require('./lib/memory-leak');
 
 var optimist = require('optimist');
-var argv = optimist.usage('Usage: $0  --dbname [string] --port [num]').
+var argv = optimist.usage('Usage: $0  --dbname [string] --port [num] --secret [secret]').
     demand(['s']).
     options('d', {
         alias: 'dbname',
@@ -21,7 +21,7 @@ var argv = optimist.usage('Usage: $0  --dbname [string] --port [num]').
     default('d', 'ten20api')
     .argv;
 
-server.startServer(argv.port, 'mongodb://localhost/' + argv.dbname, configRoute, function(err) {
+server.startServer(argv.port, 'mongodb://localhost/' + argv.dbname, argv.secret, configRoute, function(err) {
     if (err) {
         console.log('server did not start ' + err);
     } else {
