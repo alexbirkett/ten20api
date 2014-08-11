@@ -4,6 +4,7 @@ require('./lib/memory-leak');
 
 var optimist = require('optimist');
 var argv = optimist.usage('Usage: $0  --dbname [string] --port [num]').
+    demand(['s']).
     options('d', {
         alias: 'dbname',
         describe: 'database name'
@@ -11,6 +12,10 @@ var argv = optimist.usage('Usage: $0  --dbname [string] --port [num]').
     options('p', {
         alias: 'port',
         describe: 'port'
+    }).
+    options('s', {
+        alias: 'secret',
+        describe: 'json web token secret'
     }).
     default('p', 3001).
     default('d', 'ten20api')
