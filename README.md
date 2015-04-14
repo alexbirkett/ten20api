@@ -168,17 +168,17 @@ Make a directory to compile node in
     mkdir node
     cd node
     
-Get node e.g node v0.10.28
+Get node e.g node v0.10.38
 
-    wget http://nodejs.org/dist/v0.10.28/node-v0.10.28.tar.gz
+    wget http://nodejs.org/dist/v0.10.38/node-v0.10.38.tar.gz
     
 Unpack
 
-    tar -xzf node-v0.10.28.tar.gz 
+    tar -xzf node-v0.10.38.tar.gz
     
 Build
 
-    cd node-v0.10.28/
+    cd node-v0.10.38/
     ./configure --prefix=$HOME/local/node
     make
     make install
