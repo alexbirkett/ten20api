@@ -8,15 +8,15 @@
   },
   "dependencies": {
     "mongodb": "1.4.23",
-    "express": "4.10.6",
+    "express": "4.12.3",
     "scrypt": "4.0.7",
     "express-dry-router": "0.1.2",
     "async": "0.9.0",
     "optimist": "0.6.1",
     "express-jwt": "3.0.0",
     "jsonwebtoken": "~5.0.0",
-    "body-parser": "1.10.0",
-    "morgan": "1.5.0"
+    "body-parser": "1.12.2",
+    "morgan": "1.5.2"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
