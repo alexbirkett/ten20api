@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
-    "start": "node app"
+    "start": "node app",
+    "test": "mocha test --recursive"
   },
   "dependencies": {
     "mongodb": "1.4.23",
